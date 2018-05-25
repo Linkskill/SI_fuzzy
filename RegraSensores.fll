@@ -1,0 +1,42 @@
+Engine: 
+InputVariable: SensorFrente
+  enabled: true
+  range: 0.000 0.200
+  term: Perto Trapezoid 0.000 0.000 0.050 0.075
+  term: Medio Trapezoid 0.050 0.080 0.120 0.150
+  term: Longe Trapezoid 0.125 0.150 0.200 0.200
+InputVariable: SensorEsq
+  enabled: true
+  range: 0.000 0.200
+  term: Perto Trapezoid 0.000 0.000 0.050 0.075
+  term: Medio Trapezoid 0.050 0.080 0.120 0.150
+  term: Longe Trapezoid 0.125 0.150 0.200 0.200
+InputVariable: SensorDir
+  enabled: true
+  range: 0.000 0.200
+  term: Perto Trapezoid 0.000 0.000 0.050 0.075
+  term: Medio Trapezoid 0.050 0.080 0.120 0.150
+  term: Longe Trapezoid 0.125 0.150 0.200 0.200
+InputVariable: SensorDiagEsq
+  enabled: true
+  range: 0.000 0.200
+  term: Perto Trapezoid 0.000 0.000 0.050 0.075
+  term: Medio Trapezoid 0.050 0.080 0.120 0.150
+  term: Longe Trapezoid 0.125 0.150 0.200 0.200
+InputVariable: SensorDiagDir
+  enabled: true
+  range: 0.000 0.200
+  term: Perto Trapezoid 0.000 0.000 0.050 0.075
+  term: Medio Trapezoid 0.050 0.080 0.120 0.150
+  term: Longe Trapezoid 0.125 0.150 0.200 0.200
+InputVariable: SensorFrente2
+  enabled: true
+  range: 0.000 0.200
+  term: Perto Trapezoid 0.000 0.000 0.050 0.075
+  term: Medio Trapezoid 0.050 0.080 0.120 0.150
+  term: Longe Trapezoid 0.125 0.150 0.200 0.200
+RuleBlock: 
+  enabled: true
+  conjunction: none
+  disjunction: none
+  activation: none
