@@ -35,6 +35,76 @@ InputVariable: SensorFrente2
   term: Perto Trapezoid 0.000 0.000 0.050 0.075
   term: Medio Trapezoid 0.050 0.080 0.120 0.150
   term: Longe Trapezoid 0.125 0.150 0.200 0.200
+OutputVariable: FrenteForte
+  enabled: true
+  range: 0.000 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorEsq Triangle 0.000 0.200 0.200
+  term: MotorDir Triangle 0.000 0.200 0.200
+OutputVariable: CurvaEsqLeve
+  enabled: true
+  range: 0.000 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorEsq Triangle 0.000 0.200 0.200
+  term: MotorDIr Triangle 0.000 0.100 0.100
+OutputVariable: CurvaDirLeve
+  enabled: true
+  range: 0.000 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorDir Triangle 0.000 0.200 0.200
+  term: MotorEsq Triangle 0.000 0.100 0.100
+OutputVariable: CurvaEsqForte
+  enabled: true
+  range: 0.000 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorEsq Triangle 0.000 0.200 0.200
+  term: MotorDIr Triangle 0.000 0.000 0.000
+OutputVariable: CurvaDirForte
+  enabled: true
+  range: 0.000 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorDir Triangle 0.000 0.200 0.200
+  term: MotorEsq Triangle 0.000 0.000 0.000
+OutputVariable: MeiaVolta
+  enabled: true
+  range: -0.200 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorEsq Triangle 0.000 0.200 0.200
+  term: MotorDir Triangle -0.200 -0.200 0.000
+OutputVariable: FrenteFraca
+  enabled: true
+  range: 0.000 0.200
+  accumulation: none
+  defuzzifier: none
+  default: nan
+  lock-valid: false
+  lock-range: false
+  term: MotorEsq Triangle 0.000 0.100 0.100
+  term: MotorDir Triangle 0.000 0.100 0.100
 RuleBlock: 
   enabled: true
   conjunction: none
