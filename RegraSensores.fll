@@ -35,78 +35,39 @@ InputVariable: SensorFrente2
   term: Perto Trapezoid 0.000 0.000 0.050 0.075
   term: Medio Trapezoid 0.050 0.080 0.120 0.150
   term: Longe Trapezoid 0.125 0.150 0.200 0.200
-OutputVariable: FrenteForte
-  enabled: true
-  range: 0.000 0.200
-  accumulation: none
-  defuzzifier: none
-  default: nan
-  lock-valid: false
-  lock-range: false
-  term: MotorEsq Triangle 0.000 0.200 0.200
-  term: MotorDir Triangle 0.000 0.200 0.200
-OutputVariable: CurvaEsqLeve
-  enabled: true
-  range: 0.000 0.200
-  accumulation: none
-  defuzzifier: none
-  default: nan
-  lock-valid: false
-  lock-range: false
-  term: MotorEsq Triangle 0.000 0.200 0.200
-  term: MotorDIr Triangle 0.000 0.100 0.100
-OutputVariable: CurvaDirLeve
-  enabled: true
-  range: 0.000 0.200
-  accumulation: none
-  defuzzifier: none
-  default: nan
-  lock-valid: false
-  lock-range: false
-  term: MotorDir Triangle 0.000 0.200 0.200
-  term: MotorEsq Triangle 0.000 0.100 0.100
-OutputVariable: CurvaEsqForte
-  enabled: true
-  range: 0.000 0.200
-  accumulation: none
-  defuzzifier: none
-  default: nan
-  lock-valid: false
-  lock-range: false
-  term: MotorEsq Triangle 0.000 0.200 0.200
-  term: MotorDIr Triangle 0.000 0.000 0.000
-OutputVariable: CurvaDirForte
-  enabled: true
-  range: 0.000 0.200
-  accumulation: none
-  defuzzifier: none
-  default: nan
-  lock-valid: false
-  lock-range: false
-  term: MotorDir Triangle 0.000 0.200 0.200
-  term: MotorEsq Triangle 0.000 0.000 0.000
-OutputVariable: MeiaVolta
+OutputVariable: MotorEsq
   enabled: true
   range: -0.200 0.200
-  accumulation: none
-  defuzzifier: none
+  accumulation: AlgebraicSum
+  defuzzifier: Centroid 200
   default: nan
   lock-valid: false
   lock-range: false
-  term: MotorEsq Triangle 0.000 0.200 0.200
-  term: MotorDir Triangle -0.200 -0.200 0.000
-OutputVariable: FrenteFraca
+  term: Reverso Trapezoid -0.200 -0.200 -0.100 0.000
+  term: Fraco Trapezoid 0.000 0.000 0.050 0.075
+  term: Media Trapezoid 0.050 0.075 0.125 0.150
+  term: Forte Trapezoid 0.125 0.150 0.200 0.200
+OutputVariable: MotorDir
   enabled: true
-  range: 0.000 0.200
-  accumulation: none
-  defuzzifier: none
+  range: -0.200 0.200
+  accumulation: AlgebraicSum
+  defuzzifier: Centroid 200
   default: nan
   lock-valid: false
   lock-range: false
-  term: MotorEsq Triangle 0.000 0.100 0.100
-  term: MotorDir Triangle 0.000 0.100 0.100
+  term: Reverso Trapezoid -0.200 -0.200 -0.100 0.000
+  term: Fraco Trapezoid 0.000 0.000 0.050 0.075
+  term: Media Trapezoid 0.050 0.075 0.125 0.150
+  term: Forte Trapezoid 0.125 0.150 0.200 0.200
 RuleBlock: 
   enabled: true
   conjunction: none
   disjunction: none
   activation: none
+  rule: if SensorEsq is Medio or SensorDiagEsq is Medio and SensorDir is Longe or SensorDiagDir is Longe then MotorEsq is Forte and MotorDir is Media
+  rule: if SensorDir is Medio or SensorDiagDir is Medio and SensorEsq is Longe or SensorDiagEsq is Longe then MotorDir is Forte and MotorEsq is Media
+  rule: if SensorEsq is Perto or SensorDiagEsq is Perto and SensorDir is Longe or SensorDir is Medio or SensorDiagDir is Longe or SensorDiagDir is Medio then MotorEsq is Forte and MotorDir is Fraco
+  rule: if SensorDir is Perto or SensorDiagDir is Perto and SensorEsq is Longe or SensorEsq is Medio or SensorDiagEsq is Longe or SensorDiagEsq is Medio then MotorDir is Forte and MotorEsq is Fraco
+  rule: if SensorFrente is Longe or SensorFrente2 is Longe then MotorDir is Forte and MotorEsq is Forte
+  rule: if SensorFrente is Medio or SensorFrente2 is Medio then MotorDir is Media and MotorEsq is Media
+  rule: if SensorFrente is Perto or SensorFrente2 is Perto and SensorDir is Perto or SensorDiagDir is Perto and SensorEsq is Perto or SensorDiagEsq is Perto then MotorDir is Forte and MotorEsq is Reverso
