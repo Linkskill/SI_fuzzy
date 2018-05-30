@@ -1,4 +1,4 @@
-Engine: 
+Engine: wallDetection
 InputVariable: SensorFrente
   enabled: true
   range: 0.000 0.200
@@ -17,58 +17,40 @@ InputVariable: SensorDir
   term: Perto Trapezoid 0.000 0.000 0.050 0.075
   term: Medio Trapezoid 0.050 0.080 0.120 0.150
   term: Longe Trapezoid 0.125 0.150 0.200 0.200
-InputVariable: SensorDiagEsq
-  enabled: true
-  range: 0.000 0.200
-  term: Perto Trapezoid 0.000 0.000 0.050 0.075
-  term: Medio Trapezoid 0.050 0.080 0.120 0.150
-  term: Longe Trapezoid 0.125 0.150 0.200 0.200
-InputVariable: SensorDiagDir
-  enabled: true
-  range: 0.000 0.200
-  term: Perto Trapezoid 0.000 0.000 0.050 0.075
-  term: Medio Trapezoid 0.050 0.080 0.120 0.150
-  term: Longe Trapezoid 0.125 0.150 0.200 0.200
-InputVariable: SensorFrente2
-  enabled: true
-  range: 0.000 0.200
-  term: Perto Trapezoid 0.000 0.000 0.050 0.075
-  term: Medio Trapezoid 0.050 0.080 0.120 0.150
-  term: Longe Trapezoid 0.125 0.150 0.200 0.200
 OutputVariable: MotorEsq
   enabled: true
-  range: -0.200 0.200
+  range: -1.000 1.000
   accumulation: AlgebraicSum
   defuzzifier: Centroid 200
-  default: 0.200
+  default: 0.000
   lock-valid: false
   lock-range: true
-  term: Reverso Trapezoid -0.200 -0.200 -0.100 0.000
-  term: Fraco Trapezoid 0.000 0.000 0.050 0.075
-  term: Media Trapezoid 0.050 0.075 0.125 0.150
-  term: Forte Trapezoid 0.125 0.150 0.200 0.200
+  term: ReversoRapido Trapezoid -1.000 -1.000 -0.600 -0.400
+  term: ReversoLento Trapezoid -0.600 -0.400 0.000 0.000
+  term: Lento Trapezoid 0.000 0.000 0.400 0.600
+  term: Rapido Trapezoid 0.400 0.600 1.000 1.000
 OutputVariable: MotorDir
   enabled: true
-  range: -0.200 0.200
+  range: -1.000 1.000
   accumulation: AlgebraicSum
   defuzzifier: Centroid 200
-  default: 0.200
+  default: 0.000
   lock-valid: false
   lock-range: true
-  term: Reverso Trapezoid -0.200 -0.200 -0.100 0.000
-  term: Fraco Trapezoid 0.000 0.000 0.050 0.075
-  term: Media Trapezoid 0.050 0.075 0.125 0.150
-  term: Forte Trapezoid 0.125 0.150 0.200 0.200
+  term: ReversoRapido Trapezoid -1.000 -1.000 -0.600 -0.400
+  term: ReversoLento Trapezoid -0.600 -0.400 0.000 0.000
+  term: Lento Trapezoid 0.000 0.000 0.400 0.600
+  term: Rapido Trapezoid 0.400 0.600 1.000 1.000
 RuleBlock: 
   enabled: true
   conjunction: Minimum
   disjunction: Maximum
   activation: Minimum
-  rule: if SensorFrente is Longe or SensorFrente2 is Longe then MotorDir is Forte and MotorEsq is Forte
-  rule: if SensorFrente is Medio or SensorFrente2 is Medio then MotorDir is Media and MotorEsq is Media
-  rule: if SensorFrente is Perto or SensorFrente2 is Perto and SensorDir is Perto or SensorDiagDir is Perto and SensorEsq is Perto or SensorDiagEsq is Perto then MotorDir is Forte and MotorEsq is Reverso
-  rule: if SensorEsq is Medio or SensorDiagEsq is Medio then MotorEsq is Forte and MotorDir is Media
-  rule: if SensorDir is Medio or SensorDiagDir is Medio then MotorDir is Forte and MotorEsq is Media
-  rule: if SensorEsq is Perto or SensorDiagEsq is Perto then MotorEsq is Forte and MotorDir is Fraco
-  rule: if SensorDir is Perto or SensorDiagDir is Perto then MotorDir is Forte and MotorEsq is Fraco
-  rule: if SensorDir is Medio or SensorDiagDir is Medio and SensorEsq is Medio or SensorDiagEsq is Medio then MotorDir is Media and MotorEsq is Media
+  rule: if SensorFrente is Longe then MotorDir is Rapido and MotorEsq is Rapido
+  rule: if SensorFrente is Medio then MotorDir is Lento and MotorEsq is Lento
+  rule: if SensorFrente is Perto and SensorDir is Perto and SensorEsq is Perto then MotorDir is Rapido and MotorEsq is ReversoRapido
+  rule: if SensorEsq is Medio then MotorEsq is Rapido and MotorDir is Lento
+  rule: if SensorDir is Medio then MotorDir is Rapido and MotorEsq is Lento
+  rule: if SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento
+  rule: if SensorDir is Perto then MotorDir is Rapido and MotorEsq is ReversoLento
+  rule: if SensorDir is Medio and SensorEsq is Medio then MotorDir is Lento and MotorEsq is Lento
