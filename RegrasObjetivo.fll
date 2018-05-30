@@ -1,0 +1,49 @@
+Engine: moveToGoal
+InputVariable: DistanciaObjetivo
+  enabled: true
+  range: 0.000 10.000
+  term: MuitoPerto Trapezoid 0.000 0.000 0.200 0.500
+  term: Perto Trapezoid 0.200 0.500 1.000 1.300
+  term: Longe Trapezoid 1.000 1.300 10.000 10.000
+InputVariable: AnguloComObjetivo
+  enabled: true
+  range: -1.570 1.570
+  term: MuitoEsquerda Trapezoid -1.570 -1.570 -1.000 -0.800
+  term: Esquerda Trapezoid -1.000 -0.800 -0.360 -0.180
+  term: Centro Trapezoid -0.360 -0.180 0.180 0.360
+  term: Direita Trapezoid 0.180 0.360 0.800 1.000
+  term: MuitoDireita Trapezoid 0.800 1.000 1.570 1.570
+OutputVariable: MotorEsq
+  enabled: true
+  range: -1.000 1.000
+  accumulation: AlgebraicSum
+  defuzzifier: Centroid 200
+  default: 0.200
+  lock-valid: false
+  lock-range: true
+  term: ReversoRapido Trapezoid -1.000 -1.000 -0.600 -0.400
+  term: ReversoLento Trapezoid -0.600 -0.400 0.000 0.000
+  term: Lento Trapezoid 0.000 0.000 0.400 0.600
+  term: Rapido Trapezoid 0.400 0.600 1.000 1.000
+OutputVariable: MotorDir
+  enabled: true
+  range: -1.000 1.000
+  accumulation: AlgebraicSum
+  defuzzifier: Centroid 200
+  default: 0.200
+  lock-valid: false
+  lock-range: true
+  term: ReversoRapido Trapezoid -1.000 -1.000 -0.600 -0.400
+  term: ReversoLento Trapezoid -0.600 -0.400 0.000 0.000
+  term: Lento Trapezoid 0.000 0.000 0.400 0.600
+  term: Rapido Trapezoid 0.400 0.600 1.000 1.000
+RuleBlock: 
+  enabled: true
+  conjunction: Minimum
+  disjunction: Maximum
+  activation: Minimum
+  rule: if AnguloComObjetivo is MuitoEsquerda then MotorEsq is ReversoRapido and MotorDir is Rapido
+  rule: if AnguloComObjetivo is Esquerda then MotorEsq = ReversoLento and MotorDir is Lento
+  rule: if AnguloComObjetivo is Direita then MotorEsq is Lento and MotorDir is ReversoLento
+  rule: if AnguloComObjetivo is MuitoDireita then MotorEsq is Rapido and MotorDir is ReversoRapido
+  rule: if DistanciaObjetivo is MuitoPerto and AnguloComObjetivo is Centro then MotorEsq is Lento and MotorDir is Lento
