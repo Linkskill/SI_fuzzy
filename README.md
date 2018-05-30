@@ -29,7 +29,11 @@ Todos os sensores são representados pelo mesmo gráfico de trapezóides:
 * Medio: 0.050 - 0.080 - 0.120 - 0.150
 * Longe: 0.125 - 0.150 - 0.200 - 0.200 
 
-Para relacionar a regra dos sensores com o motor precisamos determinar a velocidade máxima.
+A velocidade é, representada pelos motores direito e esquerdo, delimitada por trapezóides:
+* Reverso: (-0.200) - (-0.200) - (-0.100) - 0.000 
+* Fraco: 0.000 - 0.000 - 0.050 - 0.075
+* Media: 0.050 - 0.075 - 0.125 - 0.150
+* Forte: 0.125 - 0.150 - 0.200 - 0.200
 
 ## Links úteis
 
