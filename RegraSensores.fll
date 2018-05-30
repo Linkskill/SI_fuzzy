@@ -40,9 +40,9 @@ OutputVariable: MotorEsq
   range: -0.200 0.200
   accumulation: AlgebraicSum
   defuzzifier: Centroid 200
-  default: nan
+  default: 0.200
   lock-valid: false
-  lock-range: false
+  lock-range: true
   term: Reverso Trapezoid -0.200 -0.200 -0.100 0.000
   term: Fraco Trapezoid 0.000 0.000 0.050 0.075
   term: Media Trapezoid 0.050 0.075 0.125 0.150
@@ -52,22 +52,23 @@ OutputVariable: MotorDir
   range: -0.200 0.200
   accumulation: AlgebraicSum
   defuzzifier: Centroid 200
-  default: nan
+  default: 0.200
   lock-valid: false
-  lock-range: false
+  lock-range: true
   term: Reverso Trapezoid -0.200 -0.200 -0.100 0.000
   term: Fraco Trapezoid 0.000 0.000 0.050 0.075
   term: Media Trapezoid 0.050 0.075 0.125 0.150
   term: Forte Trapezoid 0.125 0.150 0.200 0.200
 RuleBlock: 
   enabled: true
-  conjunction: none
-  disjunction: none
-  activation: none
-  rule: if SensorEsq is Medio or SensorDiagEsq is Medio and SensorDir is Longe or SensorDiagDir is Longe then MotorEsq is Forte and MotorDir is Media
-  rule: if SensorDir is Medio or SensorDiagDir is Medio and SensorEsq is Longe or SensorDiagEsq is Longe then MotorDir is Forte and MotorEsq is Media
-  rule: if SensorEsq is Perto or SensorDiagEsq is Perto and SensorDir is Longe or SensorDir is Medio or SensorDiagDir is Longe or SensorDiagDir is Medio then MotorEsq is Forte and MotorDir is Fraco
-  rule: if SensorDir is Perto or SensorDiagDir is Perto and SensorEsq is Longe or SensorEsq is Medio or SensorDiagEsq is Longe or SensorDiagEsq is Medio then MotorDir is Forte and MotorEsq is Fraco
+  conjunction: Minimum
+  disjunction: Maximum
+  activation: Minimum
   rule: if SensorFrente is Longe or SensorFrente2 is Longe then MotorDir is Forte and MotorEsq is Forte
   rule: if SensorFrente is Medio or SensorFrente2 is Medio then MotorDir is Media and MotorEsq is Media
   rule: if SensorFrente is Perto or SensorFrente2 is Perto and SensorDir is Perto or SensorDiagDir is Perto and SensorEsq is Perto or SensorDiagEsq is Perto then MotorDir is Forte and MotorEsq is Reverso
+  rule: if SensorEsq is Medio or SensorDiagEsq is Medio then MotorEsq is Forte and MotorDir is Media
+  rule: if SensorDir is Medio or SensorDiagDir is Medio then MotorDir is Forte and MotorEsq is Media
+  rule: if SensorEsq is Perto or SensorDiagEsq is Perto then MotorEsq is Forte and MotorDir is Fraco
+  rule: if SensorDir is Perto or SensorDiagDir is Perto then MotorDir is Forte and MotorEsq is Fraco
+  rule: if SensorDir is Medio or SensorDiagDir is Medio and SensorEsq is Medio or SensorDiagEsq is Medio then MotorDir is Media and MotorEsq is Media
