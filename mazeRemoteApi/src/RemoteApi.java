@@ -60,6 +60,7 @@ public class RemoteApi {
     
             // inicialização dos sensores
             final int NUM_SENSORS = 5;
+            final float SENSORS_RANGE = (float) 0.2;
             System.out.print("Conectando-se aos sensores...");
             IntWA sensors = new IntWA(NUM_SENSORS);
             
@@ -70,27 +71,28 @@ public class RemoteApi {
                 vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", new IntW(sensors.getArray()[4]), vrep.simx_opmode_blocking) == vrep.simx_return_ok
                 )
                 System.out.println("Sucesso! (ultrassom)");
-            else if(vrep.simxGetObjectHandle(clientID, "Left_Vision_sensor", new IntW(sensors.getArray()[0]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "LM_Vision_sensor", new IntW(sensors.getArray()[1]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "Middle_Vision_sensor", new IntW(sensors.getArray()[2]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "RM_Vision_sensor", new IntW(sensors.getArray()[3]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "Right_Vision_sensor", new IntW(sensors.getArray()[4]), vrep.simx_opmode_blocking) == vrep.simx_return_ok
-                )
-                System.out.println("Sucesso! (visão)");
+//            else if(vrep.simxGetObjectHandle(clientID, "Left_Vision_sensor", new IntW(sensors.getArray()[0]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "LM_Vision_sensor", new IntW(sensors.getArray()[1]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "Middle_Vision_sensor", new IntW(sensors.getArray()[2]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "RM_Vision_sensor", new IntW(sensors.getArray()[3]), vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "Right_Vision_sensor", new IntW(sensors.getArray()[4]), vrep.simx_opmode_blocking) == vrep.simx_return_ok
+//                )
+//                System.out.println("Sucesso! (visão)");
             else {
-                System.out.println("Falhou!\nSem sensores não dá. Saindo...");
+                System.out.println("Falhou!\n. Saindo...");
                 endConnection(vrep, clientID);
             }
 
             FloatWAA sensorsReadValues = new FloatWAA(NUM_SENSORS);
             for (int i=0; i < NUM_SENSORS; i++)
                 sensorsReadValues.getArray()[i] = new FloatWA(3);
-            
+
             FloatWA distances = new FloatWA(NUM_SENSORS);
             for (int i=0; i < NUM_SENSORS; i++)
                 distances.getArray()[i] = 0;
             
             // inicialização dos motores
+            float MAX_SPEED = (float) 2.0;
             IntW leftMotorHandle = new IntW(0),
                  rightMotorHandle = new IntW(0);
             System.out.println("Se conectando aos motores...");
@@ -113,14 +115,11 @@ public class RemoteApi {
                     angle = new FloatWA(3); //alpha, beta e gamma. Usa-se o gamma
             float currentX, currentY,
                   currentAngle;
-            
+
             vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_blocking);
-            vrep.simxGetObjectOrientation(clientID, robotHandle.getValue(), -1, angle, vrep.simx_opmode_blocking);
             currentX = position.getArray()[0];
             currentY = position.getArray()[1];
             
-            boolean noWallsDetected;
-
             long timeLimit = 10*NANOS_PER_S;
             System.out.println("  << Enquanto ele não se movimenta, roda só um pouco e depois para >> ");
             System.out.println("  << Depois podemos colocar um limite de tempo para ele desistir >> ");
@@ -128,84 +127,71 @@ public class RemoteApi {
 
             //loop de execucao
             while (vrep.simxGetConnectionId(clientID) != -1 &&
-                    euclideanDistance(currentX, currentY, goalX, goalY) > 0.5 &&
+                   euclideanDistance(currentX, currentY, goalX, goalY) > 0.2 &&
                    System.nanoTime() - startTime < timeLimit) {
                 //Lê posição e ângulo
-                vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_streaming);
-                vrep.simxGetObjectOrientation(clientID, robotHandle.getValue(), -1, angle, vrep.simx_opmode_streaming);
+                vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_blocking);
                 currentX = position.getArray()[0];
                 currentY = position.getArray()[1];
-                currentAngle = angle.getArray()[2];
-
-//                System.out.format("Posicao (x,y): %.2f %.2f)\n", current_x, current_y);
-//                System.out.format("Angulo em radianos: %.3f\n", current_angle);
 
                 //Lê os sensores, calcula as distâncias
-                noWallsDetected = true;
+                boolean noWallsDetected = true;
                 for(int i=0; i < NUM_SENSORS; i++) {
-                    vrep.simxReadProximitySensor(clientID, sensors.getArray()[i], null, sensorsReadValues.getArray()[i],null,null,vrep.simx_opmode_streaming);
-                    distances.getArray()[i] =
-                        (float) pow(sensorsReadValues.getArray()[i].getArray()[0], 2) +
-                        (float) pow(sensorsReadValues.getArray()[i].getArray()[1], 2) +
-                        (float) pow(sensorsReadValues.getArray()[i].getArray()[2], 2);
+                    vrep.simxReadProximitySensor(clientID, sensors.getArray()[i], null, sensorsReadValues.getArray()[i],null,null,vrep.simx_opmode_blocking);
+                    distances.getArray()[i] = (float)
+                        (pow(sensorsReadValues.getArray()[i].getArray()[0], 2) +
+                         pow(sensorsReadValues.getArray()[i].getArray()[1], 2) +
+                         pow(sensorsReadValues.getArray()[i].getArray()[2], 2));
                     distances.getArray()[i] = (float) sqrt(distances.getArray()[i]);
                     
-                    if (distances.getArray()[i] > 0)
+                    if (distances.getArray()[i] >= 0 && distances.getArray()[i] <= SENSORS_RANGE) //detectou algo
                         noWallsDetected = false;
+                    else
+                        distances.getArray()[i] = 1000;
+                        //variáveis fuzzy dos sensores tem que ir até esse valor
                 }
+                //combina as distâncias em 3
+                //o que faz mais sentido quando vai combinar? média? máximo?
+                float distanciaEsquerda = (distances.getArray()[0] + distances.getArray()[1]) / 2;
+                float distanciaFrente = distances.getArray()[2];
+                float distanciaDireita = (distances.getArray()[3] + distances.getArray()[4]) / 2;
                 
                 if (noWallsDetected) {
-                    //rotaciona até ficar olhando pro objetivo ou até
-                    //detectar uma parede pelos sensores
-                    double radiansToTurn = atan(abs(currentY-goalY)/abs(currentX-goalX));
+                    //vira na direção do objetivo
+                    /*
+                    makeInference(radiansToTurn, distanciaAteObjetivo?)
+                        entrada: anguloPraVirar, varia de -pi/2 a pi/2, distanciaAteObjetivo varia até quanto?
+                            (esquerda, centroEsquerda, centro, centroDireita, direita)
+                            (perto, longe)
+                        saída:  motorEsq, motorDir
+                            (rápidoFrente, devagarFrente, rápidoTrás, devagarTrás) ou algo assim
+                            se anguloPraVirar é esquerda, motorEsq = rápidoTrás e motorDir = rápidoFrente
+                            se anguloPraVirar é centroEsquerda, motorEsq = devagarTrás, motorDir = devagarFrente
+                            se anguloPraVirar é centro, motorEsq = rápidoFrente, motorDir = rápidoFrente
+                            se anguloPraVirar é centroDireita, motorEsq = rápidoFente, motorDir = rápidoTrás
+                            se anguloPraVirar é direita, motorEsq = rápidoFente, motorDir = rápidoTrás
                     
-                    int multMotorEsq, multMotorDir;
-                    if (radiansToTurn > 0) {
-                        //rotação pra direita
-                        multMotorEsq = 1;
-                        multMotorDir = -1;
-                    } else if (radiansToTurn < 0) {
-                        //rotação pra esquerda
-                        multMotorEsq = -1;
-                        multMotorDir = 1;
-                    } else {
-                        //já está olhando pra direção certa, anda pra frente
-                        multMotorEsq = 1;
-                        multMotorDir = 1;
-                    }
-                    float targetOrientation = (float) ((currentAngle + radiansToTurn) % 2*PI);
-                    
-                    while(abs(currentAngle - targetOrientation) > 0.1 && noWallsDetected) {
-                        for(int i=0; i < NUM_SENSORS; i++) {
-                            vrep.simxReadProximitySensor(clientID, sensors.getArray()[i], null, sensorsReadValues.getArray()[i],null,null,vrep.simx_opmode_streaming);
-                            distances.getArray()[i] =
-                                (float) pow(sensorsReadValues.getArray()[i].getArray()[0], 2) +
-                                (float) pow(sensorsReadValues.getArray()[i].getArray()[1], 2) +
-                                (float) pow(sensorsReadValues.getArray()[i].getArray()[2], 2);
-                            distances.getArray()[i] = (float) sqrt(distances.getArray()[i]);
-
-                            if (distances.getArray()[i] > 0) {
-                                noWallsDetected = false;
-                                break;
-                            }
-                        }
-                    }
+                            se anguloPraVirar é centro e distanciaAteObjetivo é perto, motorEsq e Dir = devagarFrente
+                            se anguloPraVirar é centro e distanciaAteObjetivo é longe, motorEsq e Dir = rapidoFrente
+                    */
+                    // Já troco pro linux, faço esse controller e coloco aqui
+                } else {
+                    //desvia das paredes
+                    /*
+                    inferência fuzzy do Link
+                    makeInference(distanciaEsquerda, distandiaFrente, distanciaDireita)
+                        entrada: 3 distancias, variando de 0 a 0.2?
+                            (perto, longe, muitoLonge/não detectou nada)
+                            se quiser coloca muitoPerto também, mas é meio desnecessário
+                        saída: motorEsq, motorDir
+                            com 3 distancias e 3 níveis diferentes, são ~27 regras
+                                nos empates faz ir sempre pro mesmo lado. ex:
+                                se distanciaEsquerda = muitoLonge, distânciaFrente = perto e
+                                    distânciaDireita = muitoLonge, então seta velocidades pra virar pra direita
+                    */
                 }
-                
-//                if algum sensor < angulo < próximo sensor
-//                    angulo para virar = arctan(abs(x2-x1)/abs(y2-y1));
-//                    se angulo > ? virar pra direita
-//                    se angulo < ? virar pra esquerda
-//                    como calcular as velocidades a partir desse angulo? Talvez...
-//                    enquanto angulo < get angulo
-//                        continua virando pra esquerda ou direita
-//                        (velocidade de um motor -x e do outro +x)
-//                else
-//                    Faz inferência fuzzy pra calcular a velocidade de cada motor
-                
-                // Seta a velocidade em cada motor
-                vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float)15, vrep.simx_opmode_oneshot);
-                vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float)15, vrep.simx_opmode_oneshot);
+//            vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), velocidade calculada, vrep.simx_opmode_oneshot);
+//            vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), velocidade calculada, vrep.simx_opmode_oneshot);
             }
             
             System.out.println("(Conexão fechada) Encerrando...");
