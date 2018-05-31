@@ -414,7 +414,7 @@ public class RemoteApi {
         ruleBlock.setDisjunction(new Maximum());
         ruleBlock.setImplication(new Minimum());
             //ruleBlock.setActivation(new Minimum());
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorDir is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorDir is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Rapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorDir is Medio or SensorDir is Perto then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorEsq is Medio or SensorEsq is Perto then MotorEsq is ReversoLento and MotorDir is ReversoRapido", engine));
