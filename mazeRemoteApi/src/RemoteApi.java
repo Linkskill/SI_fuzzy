@@ -134,6 +134,7 @@ public class RemoteApi {
 
             //engines fuzzy criadas no fuzzylite
             Engine moveToGoal = fuzzyControllerToMoveToGoal();
+            Engine wallDetection = fuzzyControllerWallDetection();
             
             long timeLimit = 20*NANOS_PER_S;
             System.out.println("  << Enquanto ele não se movimenta, roda só um pouco e depois para >> ");
@@ -210,10 +211,20 @@ public class RemoteApi {
                                 se distanciaEsquerda = muitoLonge, distânciaFrente = perto e
                                     distânciaDireita = muitoLonge, então seta velocidades pra virar pra direita
                     */
+                    wallDetection.getInputVariable("SensorFrente").setValue(distanciaFrente);
+                    wallDetection.getInputVariable("SensorEsq").setValue(distanciaEsquerda);
+                    wallDetection.getInputVariable("SensorDir").setValue(distanciaDireita);
+                    wallDetection.process();
+                    velocidadeEsq = wallDetection.getOutputVariable("MotorEsq").getValue();
+                    velocidadeDir = wallDetection.getOutputVariable("MotorDir").getValue();
+                    
+                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
+                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
                     
                     //temporario
-                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) 0, vrep.simx_opmode_oneshot);
-                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) 0, vrep.simx_opmode_oneshot);
+                    
+//                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) 0, vrep.simx_opmode_oneshot);
+//                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) 0, vrep.simx_opmode_oneshot);                    
                     break;
                 }
             }
@@ -313,6 +324,89 @@ public class RemoteApi {
 //        ruleBlock.addRule(Rule.parse("if DistanciaObjetivo is MuitoPerto and AnguloComObjetivo is Centro then MotorEsq is Lento and MotorDir is Lento", engine));
         engine.addRuleBlock(ruleBlock);
 
+        return engine;
+    }
+    
+    public static Engine fuzzyControllerWallDetection(){
+        Engine engine = new Engine();
+        engine.setName("wallDetection");
+
+        InputVariable inputVariable1 = new InputVariable();
+        inputVariable1.setEnabled(true);
+        inputVariable1.setName("SensorFrente");
+        inputVariable1.setRange(0.000, 0.200);
+        inputVariable1.addTerm(new Trapezoid("Perto", 0.000, 0.000, 0.050, 0.075));
+        inputVariable1.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.120, 0.150));
+        inputVariable1.addTerm(new Trapezoid("Longe", 0.125, 0.150, 0.200, 0.200));
+        engine.addInputVariable(inputVariable1);
+
+        InputVariable inputVariable2 = new InputVariable();
+        inputVariable2.setEnabled(true);
+        inputVariable2.setName("SensorEsq");
+        inputVariable2.setRange(0.000, 0.200);
+        inputVariable2.addTerm(new Trapezoid("Perto", 0.000, 0.000, 0.050, 0.075));
+        inputVariable2.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.120, 0.150));
+        inputVariable2.addTerm(new Trapezoid("Longe", 0.125, 0.150, 0.200, 0.200));
+        engine.addInputVariable(inputVariable2);
+
+        InputVariable inputVariable3 = new InputVariable();
+        inputVariable3.setEnabled(true);
+        inputVariable3.setName("SensorDir");
+        inputVariable3.setRange(0.000, 0.200);
+        inputVariable3.addTerm(new Trapezoid("Perto", 0.000, 0.000, 0.050, 0.075));
+        inputVariable3.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.120, 0.150));
+        inputVariable3.addTerm(new Trapezoid("Longe", 0.125, 0.150, 0.200, 0.200));
+        engine.addInputVariable(inputVariable3);
+
+        OutputVariable outputVariable1 = new OutputVariable();
+        outputVariable1.setEnabled(true);
+        outputVariable1.setName("MotorEsq");
+        outputVariable1.setRange(-10.000, 10.000);
+//        outputVariable1.fuzzyOutput().setAccumulation(new AlgebraicSum());
+        outputVariable1.setDefuzzifier(new Centroid(200));
+        outputVariable1.setDefaultValue(0.000);
+//        outputVariable1.setLockValidOutput(false);
+//        outputVariable1.setLockOutputRange(true);
+        outputVariable1.addTerm(new Trapezoid("ReversoRapido", -10.000, -10.000, -6.000, -4.000));
+        outputVariable1.addTerm(new Trapezoid("ReversoLento", -6.000, -4.000, 0.000, 0.000));
+        outputVariable1.addTerm(new Trapezoid("Lento", 0.000, 0.000, 4.000, 6.000));
+        outputVariable1.addTerm(new Trapezoid("Rapido", 4.000, 6.000, 10.000, 10.000));
+        engine.addOutputVariable(outputVariable1);
+
+        OutputVariable outputVariable2 = new OutputVariable();
+        outputVariable2.setEnabled(true);
+        outputVariable2.setName("MotorDir");
+        outputVariable2.setRange(-10.000, 10.000);
+//        outputVariable2.fuzzyOutput().setAccumulation(new AlgebraicSum());
+        outputVariable2.setDefuzzifier(new Centroid(200));
+        outputVariable2.setDefaultValue(0.000);
+//        outputVariable2.setLockValidOutput(false);
+//        outputVariable2.setLockOutputRange(true);
+        outputVariable2.addTerm(new Trapezoid("ReversoRapido", -10.000, -10.000, -6.000, -4.000));
+        outputVariable2.addTerm(new Trapezoid("ReversoLento", -6.000, -4.000, 0.000, 0.000));
+        outputVariable2.addTerm(new Trapezoid("Lento", 0.000, 0.000, 4.000, 6.000));
+        outputVariable2.addTerm(new Trapezoid("Rapido", 4.000, 6.000, 10.000, 10.000));
+        engine.addOutputVariable(outputVariable2);
+
+        RuleBlock ruleBlock = new RuleBlock();
+        ruleBlock.setEnabled(true);
+        ruleBlock.setName("");
+        ruleBlock.setConjunction(new Minimum());
+        ruleBlock.setDisjunction(new Maximum());
+        ruleBlock.setImplication(new Minimum());
+//        ruleBlock.setActivation(new Minimum());
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Longe then MotorDir is Rapido and MotorEsq is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio then MotorDir is Lento and MotorEsq is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Perto and SensorEsq is Perto then MotorDir is Rapido and MotorEsq is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Longe and SensorEsq is Longe then MotorDir is Rapido and MotorEsq is ReversoLento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Longe and SensorEsq is Medio or SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorEsq is Medio then MotorEsq is Rapido and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Medio then MotorDir is Rapido and MotorEsq is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Perto then MotorDir is Rapido and MotorEsq is ReversoLento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Medio and SensorEsq is Medio then MotorDir is Lento and MotorEsq is Lento", engine));
+        engine.addRuleBlock(ruleBlock);
+        
         return engine;
     }
 }
