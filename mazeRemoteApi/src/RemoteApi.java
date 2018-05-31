@@ -414,18 +414,15 @@ public class RemoteApi {
         ruleBlock.setDisjunction(new Maximum());
         ruleBlock.setImplication(new Minimum());
             //ruleBlock.setActivation(new Minimum());
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorDir is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio then MotorDir is Lento and MotorEsq is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Perto and SensorEsq is Perto then MotorDir is Rapido and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is ReversoLento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is LongeOuNaoDetectado and SensorEsq is Medio or SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorDir is Medio or SensorDir is Perto then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorEsq is Medio or SensorEsq is Perto then MotorEsq is ReversoLento and MotorDir is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Perto and SensorEsq is Perto then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorEsq is Medio then MotorEsq is Rapido and MotorDir is Lento", engine));
         ruleBlock.addRule(Rule.parse("if SensorDir is Medio then MotorDir is Rapido and MotorEsq is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is Perto then MotorDir is Rapido and MotorEsq is ReversoLento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is Medio and SensorEsq is Medio then MotorDir is Lento and MotorEsq is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorEsq is LongeOuNaoDetectado then MotorEsq is Rapido and MotorDir is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorEsq is Perto then MotorEsq is Lento and MotorDir is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Perto then MotorDir is Lento and MotorEsq is ReversoRapido", engine));
         engine.addRuleBlock(ruleBlock);
         
         return engine;
