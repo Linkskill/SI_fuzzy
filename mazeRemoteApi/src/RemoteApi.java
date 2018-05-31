@@ -159,7 +159,7 @@ public class RemoteApi {
                 //Lê os sensores, calcula as distâncias
                 boolean noWallsDetected = true;
                 for(int i=0; i < NUM_SENSORS; i++) {
-                    vrep.simxReadProximitySensor(clientID, sensors[i].getValue(), detected, detectedPoint,null,null,vrep.simx_opmode_blocking);
+                    vrep.simxReadProximitySensor(clientID, sensors[i].getValue(), detected, detectedPoint, null, null, vrep.simx_opmode_blocking);
                     if (detected.getValue()) {
                         noWallsDetected = false;
                         float[] sensorReadValues = detectedPoint.getArray();
@@ -180,7 +180,7 @@ public class RemoteApi {
                 float distanciaDireita = (distances[3] + distances[4]) / 2;
                 
                 if (noWallsDetected) {
-                    System.out.println("Vai em direcao ao objetivo!");
+                    System.out.println("Velocidades para ir pro objetivo!");
                    /*   entrada:
                             AnguloComObjetivo, varia de -pi/2 a pi/2,
                                 (muitoEsquerda, esquerda, centro, direita, muitoDireita)
@@ -209,15 +209,9 @@ public class RemoteApi {
                     moveToGoal.getInputVariable("AnguloComObjetivo").setValue(error);
                     moveToGoal.getInputVariable("DistanciaObjetivo").setValue(distanceToGoal);
                     moveToGoal.process();
-                    velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
-                    velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
-
-                    System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
-                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
-                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
                 } else {
                     //desvia das paredes
-                    System.out.println("Detectou! --> Desvia!");
+                    System.out.println("Velocidades para desviar das paredes!");
                     /*
                     makeInference(distanciaEsquerda, distandiaFrente, distanciaDireita)
                         entrada: 3 distancias, variando de 0 a 0.2?
@@ -236,14 +230,14 @@ public class RemoteApi {
                     wallDetection.getInputVariable("SensorEsq").setValue(distanciaEsquerda);
                     wallDetection.getInputVariable("SensorFrente").setValue(distanciaFrente);
                     wallDetection.getInputVariable("SensorDir").setValue(distanciaDireita);
-                    wallDetection.process();
-                    velocidadeEsq = wallDetection.getOutputVariable("MotorEsq").getValue();
-                    velocidadeDir = wallDetection.getOutputVariable("MotorDir").getValue();
-                    
-                    System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
-                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
-                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
                 }
+                
+                velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
+                velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
+
+                System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
+                vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
+                vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
             }
             
             System.out.println("(Conexão fechada) Encerrando...");
