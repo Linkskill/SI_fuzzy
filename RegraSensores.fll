@@ -56,3 +56,5 @@ RuleBlock:
   rule: if SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento
   rule: if SensorDir is Perto then MotorDir is Rapido and MotorEsq is ReversoLento
   rule: if SensorDir is Medio and SensorEsq is Medio then MotorDir is Lento and MotorEsq is Lento
+  rule: if SensorEsq is Longe then MotorEsq is Rapido and MotorDir is Rapido
+  rule: if SensorDir is Longe then MotorDir is Rapido and MotorEsq is Rapido

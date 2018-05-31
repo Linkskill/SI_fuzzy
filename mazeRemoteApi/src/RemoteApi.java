@@ -140,7 +140,7 @@ public class RemoteApi {
             System.out.println("  << Enquanto ele não se movimenta, roda só um pouco e depois para >> ");
             System.out.println("  << Depois podemos colocar um limite de tempo para ele desistir >> ");
             long startTime = System.nanoTime();
-
+            
             //loop de execucao
             while (vrep.simxGetConnectionId(clientID) != -1 &&
                    euclideanDistance(currentX, currentY, goalX, goalY) > 0.2 &&
@@ -217,6 +217,10 @@ public class RemoteApi {
                     wallDetection.process();
                     velocidadeEsq = wallDetection.getOutputVariable("MotorEsq").getValue();
                     velocidadeDir = wallDetection.getOutputVariable("MotorDir").getValue();
+                    
+                    System.out.println("Frente: " + distanciaFrente);
+                    System.out.println("Esquerda: " + distanciaEsquerda);
+                    System.out.println("Direita: " + distanciaDireita);
                     
                     vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
                     vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
@@ -405,6 +409,8 @@ public class RemoteApi {
         ruleBlock.addRule(Rule.parse("if SensorEsq is Perto then MotorEsq is Rapido and MotorDir is ReversoLento", engine));
         ruleBlock.addRule(Rule.parse("if SensorDir is Perto then MotorDir is Rapido and MotorEsq is ReversoLento", engine));
         ruleBlock.addRule(Rule.parse("if SensorDir is Medio and SensorEsq is Medio then MotorDir is Lento and MotorEsq is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorEsq is Longe then MotorEsq is Rapido and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Longe then MotorDir is Rapido and MotorEsq is Rapido", engine));
         engine.addRuleBlock(ruleBlock);
         
         return engine;
