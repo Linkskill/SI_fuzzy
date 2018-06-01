@@ -209,6 +209,15 @@ public class RemoteApi {
                     moveToGoal.getInputVariable("AnguloComObjetivo").setValue(error);
                     moveToGoal.getInputVariable("DistanciaObjetivo").setValue(distanceToGoal);
                     moveToGoal.process();
+                    
+                    velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
+                    velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
+                    
+                    System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
+                    
+                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
+                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
+                    
                 } else {
                     //desvia das paredes
                     System.out.println("Velocidades para desviar das paredes!");
@@ -222,22 +231,24 @@ public class RemoteApi {
                                 nos empates faz ir sempre pro mesmo lado. ex:
                                 se distanciaEsquerda = muitoLonge, distânciaFrente = perto e
                                     distânciaDireita = muitoLonge, então seta velocidades pra virar pra direita
-                    */
+                    */                    
+                    wallDetection.getInputVariable("SensorEsq").setValue(distanciaEsquerda);
+                    wallDetection.getInputVariable("SensorFrente").setValue(distanciaFrente);
+                    wallDetection.getInputVariable("SensorDir").setValue(distanciaDireita);
+                    
                     System.out.println("  Média esquerda: " + distanciaEsquerda);
                     System.out.println("  Média frente: " + distanciaFrente);
                     System.out.println("  Média direita: " + distanciaDireita);
                     
-                    wallDetection.getInputVariable("SensorEsq").setValue(distanciaEsquerda);
-                    wallDetection.getInputVariable("SensorFrente").setValue(distanciaFrente);
-                    wallDetection.getInputVariable("SensorDir").setValue(distanciaDireita);
+                    wallDetection.process(); 
+                    velocidadeEsq = wallDetection.getOutputVariable("MotorEsq").getValue();
+                    velocidadeDir = wallDetection.getOutputVariable("MotorDir").getValue();
+                    
+                    System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
+                    
+                    vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
+                    vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
                 }
-                
-                velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
-                velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
-
-                System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
-                vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
-                vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
             }
             
             System.out.println("(Conexão fechada) Encerrando...");
@@ -295,7 +306,7 @@ public class RemoteApi {
         outputVariable1.fuzzyOutput().setAggregation(new AlgebraicSum());
             //outputVariable1.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable1.setDefuzzifier(new Centroid(200));
-        outputVariable1.setDefaultValue(2.500);
+        outputVariable1.setDefaultValue(10.000);
         outputVariable1.setLockValueInRange(true);
             //outputVariable1.setLockValidOutput(false);
             //outputVariable1.setLockOutputRange(true);
@@ -312,7 +323,7 @@ public class RemoteApi {
         outputVariable2.fuzzyOutput().setAggregation(new AlgebraicSum());
             //outputVariable2.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable2.setDefuzzifier(new Centroid(200));
-        outputVariable2.setDefaultValue(0.200);
+        outputVariable2.setDefaultValue(10.000);
         outputVariable2.setLockValueInRange(true);
             //outputVariable2.setLockValidOutput(false);
             //outputVariable2.setLockOutputRange(true);
