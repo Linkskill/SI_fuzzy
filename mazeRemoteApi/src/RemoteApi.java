@@ -65,6 +65,9 @@ public class RemoteApi {
             float goalY = in.nextFloat();
             
             // inicialização do robo
+            // Para K3
+            //String robotName = "K3_robot";
+            // Para Bob
             String robotName = "bubbleRob";
             System.out.print("Procurando objeto " + robotName + "...");
             IntW robotHandle = new IntW(0);
@@ -76,17 +79,26 @@ public class RemoteApi {
                 System.out.println(robotName + "não existe!");
                 endConnection(vrep, clientID);
             }
-    
+            
             // inicialização dos sensores
+            // Para K3
+            //final int NUM_SENSORS = 6;
+            //Para Bob
             final int NUM_SENSORS = 5;
+            
             System.out.print("Conectando-se aos sensores...");
             IntW[] sensors = new IntW[NUM_SENSORS];
-            for (int i=0; i < NUM_SENSORS; i++)
+            for (int i=0; i < NUM_SENSORS; i++) 
                 sensors[i] = new IntW(0);
             
             if (vrep.simxGetObjectHandle(clientID, "Left_ultrasonic", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
                 vrep.simxGetObjectHandle(clientID, "LM_ultrasonic", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
                 vrep.simxGetObjectHandle(clientID, "Middle_ultrasonic", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+                // Para K3
+//                vrep.simxGetObjectHandle(clientID, "Middle_ultrasonic0", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "RM_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[5], vrep.simx_opmode_blocking) == vrep.simx_return_ok
+                // Para Bob
                 vrep.simxGetObjectHandle(clientID, "RM_ultrasonic", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
                 vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok
                 )
@@ -95,7 +107,6 @@ public class RemoteApi {
                 System.out.println("Falhou!\n. Saindo...");
                 endConnection(vrep, clientID);
             }
-
             FloatWA detectedPoint = new FloatWA(3);
             BoolW detected = new BoolW(false);
 
@@ -105,6 +116,11 @@ public class RemoteApi {
             IntW leftMotorHandle = new IntW(0),
                  rightMotorHandle = new IntW(0);
             System.out.println("Se conectando aos motores...");
+            
+            // Para K3
+//            if(vrep.simxGetObjectHandle(clientID, "K3_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//                System.out.println("  Motor esquerdo ok!");
+            // Para Bob
             if(vrep.simxGetObjectHandle(clientID, robotName + "_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
                 System.out.println("  Motor esquerdo ok!");
             else {
@@ -112,6 +128,10 @@ public class RemoteApi {
                 endConnection(vrep, clientID);
             }
 
+            // Para K3
+//            if(vrep.simxGetObjectHandle(clientID, "K3_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//                System.out.println("  Motor direito ok!");
+            // Para Bob
             if(vrep.simxGetObjectHandle(clientID, robotName + "_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
                 System.out.println("  Motor direito ok!");
             else {
@@ -143,7 +163,6 @@ public class RemoteApi {
             
             long timeLimit = 180*NANOS_PER_S;
             long startTime = System.nanoTime();
-            
             //loop de execucao
             while (vrep.simxGetConnectionId(clientID) != -1 &&
                     euclideanDistance(currentX, currentY, goalX, goalY) > 0.2 &&
@@ -176,8 +195,13 @@ public class RemoteApi {
                 //combina as distâncias em 3
                 //o que faz mais sentido quando vai combinar? média? máximo?
                 float distanciaEsquerda = (distances[0] + distances[1]) / 2;
+                // Para K3
+//                float distanciaFrente = (distances[2] + distances[3]) / 2;
+//                float distanciaDireita = (distances[4] + distances[5]) / 2;
+                // Para Bob
                 float distanciaFrente = distances[2];
                 float distanciaDireita = (distances[3] + distances[4]) / 2;
+                
                 
                 if (noWallsDetected) {
                     //vira na direção do objetivo
