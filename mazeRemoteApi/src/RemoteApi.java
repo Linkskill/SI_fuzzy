@@ -49,6 +49,11 @@ public class RemoteApi {
         remoteApi vrep = new remoteApi();
         vrep.simxFinish(-1); // just in case, close all opened connections
 
+        Scanner in = new Scanner(System.in);
+        System.out.println("Objetivo (x y)");
+        float goalX = in.nextFloat();
+        float goalY = in.nextFloat();
+        
         System.out.print("Tentando se conectar ao V-REP via API remota... ");
         String serverIP = "127.0.0.1";
 	int serverPort = 19999;
@@ -57,12 +62,7 @@ public class RemoteApi {
         if (clientID != -1)
         {
             System.out.println("Sucesso!");
-            System.out.println("Conectado ao V-REP via API remota!\n");
-            
-            Scanner in = new Scanner(System.in);
-            System.out.println("Objetivo (x y)");
-            float goalX = in.nextFloat();
-            float goalY = in.nextFloat();
+            System.out.println("Conectado ao V-REP!\n");
             
             // inicialização do robo
             // Para K3
@@ -76,15 +76,14 @@ public class RemoteApi {
                     " depois temos que trocar pro nosso robô!");
             else {
                 System.out.println("Falhou!");
-                System.out.println(robotName + "não existe!");
+                System.out.println(robotName + "não encontrado!");
                 endConnection(vrep, clientID);
+                System.exit(1);
             }
-            
+
             // inicialização dos sensores
-            // Para K3
-            //final int NUM_SENSORS = 6;
-            //Para Bob
-            final int NUM_SENSORS = 5;
+            //final int NUM_SENSORS = 6; //K3
+            final int NUM_SENSORS = 5; //Bob
             
             System.out.print("Conectando-se aos sensores...");
             IntW[] sensors = new IntW[NUM_SENSORS];
@@ -118,7 +117,7 @@ public class RemoteApi {
             System.out.println("Se conectando aos motores...");
             
             // Para K3
-//            if(vrep.simxGetObjectHandle(clientID, "K3_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, robotName + "_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
 //                System.out.println("  Motor esquerdo ok!");
             // Para Bob
             if(vrep.simxGetObjectHandle(clientID, robotName + "_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
@@ -126,10 +125,11 @@ public class RemoteApi {
             else {
                 System.out.println("  Motor esquerdo não encontrado!");
                 endConnection(vrep, clientID);
+                System.exit(1);
             }
 
             // Para K3
-//            if(vrep.simxGetObjectHandle(clientID, "K3_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, robotName + "_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
 //                System.out.println("  Motor direito ok!");
             // Para Bob
             if(vrep.simxGetObjectHandle(clientID, robotName + "_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
@@ -137,6 +137,7 @@ public class RemoteApi {
             else {
                 System.out.println("  Motor direito não encontrado!");
                 endConnection(vrep, clientID);
+                System.exit(1);
             }
             
             double velocidadeEsq, velocidadeDir;
@@ -153,20 +154,21 @@ public class RemoteApi {
             currentY = position.getArray()[1];
             currentAngle = angle.getArray()[2];
             System.out.println("Coordenadas iniciais do " + robotName +
-                     ": " + currentX + "  " + currentY);
-            System.out.println("Orientacao (rad): " + currentAngle);
+                     ": (" + currentX + ", " + currentY + ")");
+            System.out.println("Orientacao: " + currentAngle + " rad");
             
             //engines fuzzy criadas no fuzzylite
             Engine moveTowardsGoal = fuzzyControllerMoveTowardsGoal();
             Engine wallDetection = fuzzyControllerDodgeWall();
 
             //outras variáveis
+            float distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
             long timeLimit = 180*NANOS_PER_S; //3 minutos
             long startTime = System.nanoTime();
 
             //loop de execucao
             while (vrep.simxGetConnectionId(clientID) != -1 &&
-                    euclideanDistance(currentX, currentY, goalX, goalY) > 0.1 &&
+                    distanceToGoal > 0.1 &&
                     System.nanoTime() - startTime < timeLimit) {
                 //Lê posição e ângulo
                 vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_blocking);
@@ -175,6 +177,8 @@ public class RemoteApi {
                 currentY = position.getArray()[1];
                 currentAngle = angle.getArray()[2];
                 System.out.printf("\n(%.2f, %.2f) - %.2f rad\n", currentX, currentY, currentAngle);
+
+                distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
 
                 //Lê os sensores, calcula as distâncias
                 boolean noWallsDetected = true;
@@ -189,7 +193,7 @@ public class RemoteApi {
                              pow(sensorReadValues[2], 2));
                         distances[i] = (float) sqrt(distances[i]);
                     } else
-                        distances[i] = (float)0.5; 
+                        distances[i] = (float)0.5;
                         //variáveis fuzzy dos sensores tem que ir até esse valor
                 }
                 
@@ -206,39 +210,19 @@ public class RemoteApi {
                 
                 if (noWallsDetected) {
                     //vira na direção do objetivo
-                    System.out.println("Velocidades para ir pro objetivo!");
-                   /*   entrada:
-                            AnguloComObjetivo, varia de [-pi..pi]
-                              (muitoEsquerda, esquerda, centro, direita, muitoDireita)
-                            DistanciaAteObjetivo, varia até 10
-                                (perto, longe)
-                        saída:
-                            motorEsq, motorDir
-                              (ReversoLento, Lento, Medio, Rapido)
-                              //(ReversoRapido, reversoLento, Lento, Rapido)
-                    */
-                   
+                    System.out.println("Indo pro objetivo!");
+                    
                     System.out.printf("  Angulo atual: %.2f\n", currentAngle);
                     double goalArc = Math.atan2(goalY-currentY, goalX-currentX);
                     System.out.printf("  Goal angle: %.2f\n", goalArc);
                     //pra fazer as contas, converte pra [0..2pi]
-//                    if (goalArc < 0)
-//                        goalArc += 2*PI;
-//                    if (currentAngle < 0)
-//                        currentAngle += 2*PI;
 
                     double angleTurningToOneSide = abs(goalArc - currentAngle);
                     double angleTurningToOtherSide = 2*PI - angleTurningToOneSide;
-//                    if(angleTurningToOneSide > PI)
-//                        angleTurningToOneSide -= 2*PI;
-//                    if (angleTurningToOtherSide > PI)
-//                        angleTurningToOtherSide -= 2*PI;
-                    System.out.printf("    AngleTurningOneSide = %.2f\n",  angleTurningToOneSide);
-                    System.out.printf("    AngleTurningOtherSide = %.2f\n", angleTurningToOtherSide);
-//                    if(angleTurningToOneSide < 0)
-//                        angleTurningToOneSide += 2*PI;
-//                    if (angleTurningToOtherSide < 0)
-//                        angleTurningToOtherSide += 2*PI;
+
+                    System.out.printf("  AngleTurningOneSide = %.2f\n",  angleTurningToOneSide);
+                    System.out.printf("  AngleTurningOtherSide = %.2f\n", angleTurningToOtherSide);
+
                     double smallestAngleToTurn = min(angleTurningToOneSide,
                                                     angleTurningToOtherSide);
                     double angleToTurn;
@@ -248,10 +232,9 @@ public class RemoteApi {
                         angleToTurn = -angleTurningToOtherSide;
                     if(angleToTurn > PI)
                         angleToTurn -= 2*PI;
-                    System.out.printf("  angleToTurn: %.2f\n", angleToTurn);
-                    
-                    double distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
+                    System.out.printf("  Aangle to turn: %.2f\n", angleToTurn);
                     System.out.printf("  Distancia: %.2f\n",  distanceToGoal);
+                    
                     moveTowardsGoal.getInputVariable("AnguloComObjetivo").setValue(angleToTurn);
                     moveTowardsGoal.getInputVariable("DistanciaAteObjetivo").setValue(distanceToGoal);
                     
@@ -262,17 +245,7 @@ public class RemoteApi {
                 } else {
                     //desvia das paredes
                     System.out.println("Velocidades para desviar das paredes!");
-                    /*
-                    makeInference(distanciaEsquerda, distandiaFrente, distanciaDireita)
-                        entrada: 3 distancias, variando de 0 a 0.2?
-                            (perto, longe, muitoLonge/não detectou nada)
-                            se quiser coloca muitoPerto também, mas é meio desnecessário
-                        saída: motorEsq, motorDir
-                            com 3 distancias e 3 níveis diferentes, são ~27 regras
-                                nos empates faz ir sempre pro mesmo lado. ex:
-                                se distanciaEsquerda = muitoLonge, distânciaFrente = perto e
-                                    distânciaDireita = muitoLonge, então seta velocidades pra virar pra direita
-                    */                    
+                    
                     System.out.println("  Média esquerda: " + distanciaEsquerda);
                     System.out.println("  Média frente: " + distanciaFrente);
                     System.out.println("  Média direita: " + distanciaDireita);
@@ -293,6 +266,7 @@ public class RemoteApi {
             
             System.out.println("(Conexão fechada)");
             endConnection(vrep, clientID);
+            System.exit(1);
         }
         else {
             System.out.println("Falhou!");
@@ -301,7 +275,7 @@ public class RemoteApi {
     }
     
     public static void endConnection(remoteApi vrep, int clientID) {
-        System.out.println("Encerando...");
+        System.out.println("Encerando conexão...");
         //Pausando a simulação pro robô não ficar vagando
         vrep.simxPauseSimulation(clientID, vrep.simx_opmode_oneshot);
 
@@ -311,8 +285,6 @@ public class RemoteApi {
 
         // Now close the connection to V-REP:   
         vrep.simxFinish(clientID);
-        
-        System.exit(1);
     }
     
     public static float euclideanDistance(float x1, float y1, float x2, float y2)
