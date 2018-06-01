@@ -195,12 +195,12 @@ public class RemoteApi {
                     System.out.printf("  Angulo atual: %.2f\n", currentAngle);
                     // atan2 retorna theta de um ponto (y,x) em coordenadas polares
                     // As coordenadas do objetivo são dadas em relação ao robõ
-                    double goalAngleRelativeToRobot = Math.atan2(goalY-currentY, goalX-currentX);
-                    System.out.printf("  goalAngleRelativeToRobot: %.2f\n", goalAngleRelativeToRobot);
                     double robotXaxisAngle = currentAngle - PI/2;
-                    System.out.printf("  robotXaxisAngle: %.2f\n", robotXaxisAngle);
                     if(robotXaxisAngle < -PI)
                         robotXaxisAngle += 2*PI;
+                    System.out.printf("  robotXaxisAngle: %.2f\n", robotXaxisAngle);
+                    double goalAngleRelativeToRobot = Math.atan2(goalY-currentY, goalX-currentX);
+                    System.out.printf("  goalAngleRelativeToRobot: %.2f\n", goalAngleRelativeToRobot);
                     
                     double goalAngleRelativeToRobotXaxis = goalAngleRelativeToRobot + robotXaxisAngle;
                     if (goalAngleRelativeToRobotXaxis > PI)
@@ -220,7 +220,9 @@ public class RemoteApi {
                     System.out.printf("  Distancia: %.2f\n",  distanceToGoal);
                     moveToGoal.getInputVariable("AnguloComObjetivo").setValue(angleToTurn);
                     moveToGoal.getInputVariable("DistanciaObjetivo").setValue(distanceToGoal);
+                    
                     moveToGoal.process();
+                    
                     velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
                     velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
                 } else {
@@ -236,7 +238,7 @@ public class RemoteApi {
                                 nos empates faz ir sempre pro mesmo lado. ex:
                                 se distanciaEsquerda = muitoLonge, distânciaFrente = perto e
                                     distânciaDireita = muitoLonge, então seta velocidades pra virar pra direita
-                    */
+                    */                    
                     System.out.println("  Média esquerda: " + distanciaEsquerda);
                     System.out.println("  Média frente: " + distanciaFrente);
                     System.out.println("  Média direita: " + distanciaDireita);
@@ -244,7 +246,9 @@ public class RemoteApi {
                     wallDetection.getInputVariable("SensorEsq").setValue(distanciaEsquerda);
                     wallDetection.getInputVariable("SensorFrente").setValue(distanciaFrente);
                     wallDetection.getInputVariable("SensorDir").setValue(distanciaDireita);
-
+                    
+                    wallDetection.process();
+                    
                     velocidadeEsq = wallDetection.getOutputVariable("MotorEsq").getValue();
                     velocidadeDir = wallDetection.getOutputVariable("MotorDir").getValue();
                 }
@@ -296,11 +300,11 @@ public class RemoteApi {
         inputVariable2.setEnabled(true);
         inputVariable2.setName("AnguloComObjetivo");
         inputVariable2.setRange(-PI, PI);
-        inputVariable2.addTerm(new Trapezoid("MuitoEsquerda", 1.000, 1.400, PI, PI));
-        inputVariable2.addTerm(new Trapezoid("Esquerda", 0.000, 0.300, 1.000, 1.400));
-        inputVariable2.addTerm(new Trapezoid("Centro", -0.300, 0.000, 0.000, 0.300));
-        inputVariable2.addTerm(new Trapezoid("Direita", -1.400, -1.000, -0.300, 0.000));
         inputVariable2.addTerm(new Trapezoid("MuitoDireita", -PI, -PI, -1.400, -1.000));
+        inputVariable2.addTerm(new Trapezoid("Direita", -1.400, -1.000, -0.300, 0.100));
+        inputVariable2.addTerm(new Trapezoid("Centro", -0.300, 0.100, 0.100, 0.300));
+        inputVariable2.addTerm(new Trapezoid("Esquerda", 0.100, 0.300, 1.000, 1.400));
+        inputVariable2.addTerm(new Trapezoid("MuitoEsquerda", 1.000, 1.400, PI, PI));
         engine.addInputVariable(inputVariable2);
 
         OutputVariable outputVariable1 = new OutputVariable();
@@ -310,7 +314,7 @@ public class RemoteApi {
         outputVariable1.fuzzyOutput().setAggregation(new AlgebraicSum());
             //outputVariable1.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable1.setDefuzzifier(new Centroid(200));
-        outputVariable1.setDefaultValue(2.500);
+        outputVariable1.setDefaultValue(10.000);
         outputVariable1.setLockValueInRange(true);
             //outputVariable1.setLockValidOutput(false);
             //outputVariable1.setLockOutputRange(true);
@@ -327,7 +331,7 @@ public class RemoteApi {
         outputVariable2.fuzzyOutput().setAggregation(new AlgebraicSum());
             //outputVariable2.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable2.setDefuzzifier(new Centroid(200));
-        outputVariable2.setDefaultValue(0.200);
+        outputVariable2.setDefaultValue(10.000);
         outputVariable2.setLockValueInRange(true);
             //outputVariable2.setLockValidOutput(false);
             //outputVariable2.setLockOutputRange(true);
