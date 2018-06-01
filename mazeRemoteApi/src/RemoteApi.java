@@ -180,6 +180,7 @@ public class RemoteApi {
                 float distanciaDireita = (distances[3] + distances[4]) / 2;
                 
                 if (noWallsDetected) {
+                    //vira na direção do objetivo
                     System.out.println("Velocidades para ir pro objetivo!");
                    /*   entrada:
                             AnguloComObjetivo, varia de -pi/2 a pi/2,
@@ -190,25 +191,38 @@ public class RemoteApi {
                             motorEsq, motorDir
                                 (ReversoRapido, reversoLento, Lento, Rapido)
                     */
-                    //vira na direção do objetivo
-                    double desiredOrientation = Math.atan2(goalY-currentY, goalX-currentX);
+                   
                     System.out.printf("  Angulo atual: %.2f\n", currentAngle);
-                    System.out.printf("  Angulo desejado: %.2f\n", desiredOrientation);
-                    //atan2 e vrep retornam de [-pi..pi], converte pra [0..2pi]
-                    if (currentAngle < 0)
-                        currentAngle = (float) (2*PI + currentAngle);
-                    if (desiredOrientation < 0)
-                        desiredOrientation = 2*PI + desiredOrientation;
-                    double error = desiredOrientation-currentAngle;
-                    if (error > PI)
-                        error = error-PI;
-                    System.out.printf("  Como conseguir: %.2f\n", error);
+                    // atan2 retorna theta de um ponto (y,x) em coordenadas polares
+                    // As coordenadas do objetivo são dadas em relação ao robõ
+                    double goalAngleRelativeToRobot = Math.atan2(goalY-currentY, goalX-currentX);
+                    System.out.printf("  goalAngleRelativeToRobot: %.2f\n", goalAngleRelativeToRobot);
+                    double robotXaxisAngle = currentAngle - PI/2;
+                    System.out.printf("  robotXaxisAngle: %.2f\n", robotXaxisAngle);
+                    if(robotXaxisAngle < -PI)
+                        robotXaxisAngle += 2*PI;
+                    
+                    double goalAngleRelativeToRobotXaxis = goalAngleRelativeToRobot + robotXaxisAngle;
+                    if (goalAngleRelativeToRobotXaxis > PI)
+                        goalAngleRelativeToRobotXaxis -= 2*PI;
+                    System.out.printf("  goalAngleRelativeToRobotXaxis: %.2f\n", goalAngleRelativeToRobotXaxis);
+
+                    double angleToTurn;
+                    if (goalAngleRelativeToRobot >= 0 &&
+                        goalAngleRelativeToRobot <= PI)
+                        angleToTurn = goalAngleRelativeToRobot - PI/2;
+                    else //[-pi..0]
+                        angleToTurn = PI/2 + goalAngleRelativeToRobot % (PI/2);
+                            
+                    System.out.printf("  angleToTurn: %.2f\n", angleToTurn);
                     
                     double distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
                     System.out.printf("  Distancia: %.2f\n",  distanceToGoal);
-                    moveToGoal.getInputVariable("AnguloComObjetivo").setValue(error);
+                    moveToGoal.getInputVariable("AnguloComObjetivo").setValue(angleToTurn);
                     moveToGoal.getInputVariable("DistanciaObjetivo").setValue(distanceToGoal);
                     moveToGoal.process();
+                    velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
+                    velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
                 } else {
                     //desvia das paredes
                     System.out.println("Velocidades para desviar das paredes!");
@@ -230,11 +244,10 @@ public class RemoteApi {
                     wallDetection.getInputVariable("SensorEsq").setValue(distanciaEsquerda);
                     wallDetection.getInputVariable("SensorFrente").setValue(distanciaFrente);
                     wallDetection.getInputVariable("SensorDir").setValue(distanciaDireita);
-                }
-                
-                velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
-                velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
 
+                    velocidadeEsq = wallDetection.getOutputVariable("MotorEsq").getValue();
+                    velocidadeDir = wallDetection.getOutputVariable("MotorDir").getValue();
+                }
                 System.out.printf("  Esq=%.2f Dir=%.2f\n", velocidadeEsq, velocidadeDir);
                 vrep.simxSetJointTargetVelocity(clientID,leftMotorHandle.getValue(), (float) velocidadeEsq, vrep.simx_opmode_oneshot);
                 vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
@@ -254,7 +267,9 @@ public class RemoteApi {
         IntW pingTime = new IntW(0);
         vrep.simxGetPingTime(clientID,pingTime);
 
+        //Pausando a simulação pro robô não ficar vagando
         vrep.simxPauseSimulation(clientID, vrep.simx_opmode_oneshot);
+
         // Now close the connection to V-REP:   
         vrep.simxFinish(clientID);
     }
@@ -281,11 +296,11 @@ public class RemoteApi {
         inputVariable2.setEnabled(true);
         inputVariable2.setName("AnguloComObjetivo");
         inputVariable2.setRange(-PI, PI);
-        inputVariable2.addTerm(new Trapezoid("MuitoEsquerda", -PI, -PI, -1.400, -1.000));
-        inputVariable2.addTerm(new Trapezoid("Esquerda", -1.400, -1.000, -0.300, 0.000));
+        inputVariable2.addTerm(new Trapezoid("MuitoEsquerda", 1.000, 1.400, PI, PI));
+        inputVariable2.addTerm(new Trapezoid("Esquerda", 0.000, 0.300, 1.000, 1.400));
         inputVariable2.addTerm(new Trapezoid("Centro", -0.300, 0.000, 0.000, 0.300));
-        inputVariable2.addTerm(new Trapezoid("Direita", 0.000, 0.300, 1.000, 1.400));
-        inputVariable2.addTerm(new Trapezoid("MuitoDireita", 1.000, 1.400, PI, PI));
+        inputVariable2.addTerm(new Trapezoid("Direita", -1.400, -1.000, -0.300, 0.000));
+        inputVariable2.addTerm(new Trapezoid("MuitoDireita", -PI, -PI, -1.400, -1.000));
         engine.addInputVariable(inputVariable2);
 
         OutputVariable outputVariable1 = new OutputVariable();
