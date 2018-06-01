@@ -141,13 +141,12 @@ public class RemoteApi {
             
             double velocidadeEsq, velocidadeDir;
 
-            //outras variáveis 
+            //Lê posição e ângulo pra testar
             FloatWA position = new FloatWA(3), //x, y, z. Nao usa-se o z
                     angle = new FloatWA(3); //alpha, beta e gamma. Usa-se o gamma
             float currentX, currentY,
                   currentAngle;
 
-            //Lê posição e ângulo pra testar
             vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_blocking);
             vrep.simxGetObjectOrientation(clientID, robotHandle.getValue(), -1, angle, vrep.simx_opmode_blocking);
             currentX = position.getArray()[0];
@@ -158,14 +157,16 @@ public class RemoteApi {
             System.out.println("Orientacao (rad): " + currentAngle);
             
             //engines fuzzy criadas no fuzzylite
-            Engine moveToGoal = fuzzyControllerToMoveToGoal();
+            Engine moveTowardsGoal = fuzzyControllerMoveTowardsGoal();
             Engine wallDetection = fuzzyControllerDodgeWall();
-            
-            long timeLimit = 180*NANOS_PER_S;
+
+            //outras variáveis
+            long timeLimit = 180*NANOS_PER_S; //3 minutos
             long startTime = System.nanoTime();
+
             //loop de execucao
             while (vrep.simxGetConnectionId(clientID) != -1 &&
-                    euclideanDistance(currentX, currentY, goalX, goalY) > 0.2 &&
+                    euclideanDistance(currentX, currentY, goalX, goalY) > 0.1 &&
                     System.nanoTime() - startTime < timeLimit) {
                 //Lê posição e ângulo
                 vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_blocking);
@@ -207,48 +208,57 @@ public class RemoteApi {
                     //vira na direção do objetivo
                     System.out.println("Velocidades para ir pro objetivo!");
                    /*   entrada:
-                            AnguloComObjetivo, varia de -pi/2 a pi/2,
-                                (muitoEsquerda, esquerda, centro, direita, muitoDireita)
-                            distanciaAteObjetivo(?) varia até quanto?
+                            AnguloComObjetivo, varia de [-pi..pi]
+                              (muitoEsquerda, esquerda, centro, direita, muitoDireita)
+                            DistanciaAteObjetivo, varia até 10
                                 (perto, longe)
-                        saída: 
+                        saída:
                             motorEsq, motorDir
-                                (ReversoRapido, reversoLento, Lento, Rapido)
+                              (ReversoLento, Lento, Medio, Rapido)
+                              //(ReversoRapido, reversoLento, Lento, Rapido)
                     */
                    
                     System.out.printf("  Angulo atual: %.2f\n", currentAngle);
-                    // atan2 retorna theta de um ponto (y,x) em coordenadas polares
-                    // As coordenadas do objetivo são dadas em relação ao robõ
-                    double robotXaxisAngle = currentAngle - PI/2;
-                    if(robotXaxisAngle < -PI)
-                        robotXaxisAngle += 2*PI;
-                    System.out.printf("  robotXaxisAngle: %.2f\n", robotXaxisAngle);
-                    double goalAngleRelativeToRobot = Math.atan2(goalY-currentY, goalX-currentX);
-                    System.out.printf("  goalAngleRelativeToRobot: %.2f\n", goalAngleRelativeToRobot);
-                    
-                    double goalAngleRelativeToRobotXaxis = goalAngleRelativeToRobot + robotXaxisAngle;
-                    if (goalAngleRelativeToRobotXaxis > PI)
-                        goalAngleRelativeToRobotXaxis -= 2*PI;
-                    System.out.printf("  goalAngleRelativeToRobotXaxis: %.2f\n", goalAngleRelativeToRobotXaxis);
+                    double goalArc = Math.atan2(goalY-currentY, goalX-currentX);
+                    System.out.printf("  Goal angle: %.2f\n", goalArc);
+                    //pra fazer as contas, converte pra [0..2pi]
+//                    if (goalArc < 0)
+//                        goalArc += 2*PI;
+//                    if (currentAngle < 0)
+//                        currentAngle += 2*PI;
 
+                    double angleTurningToOneSide = abs(goalArc - currentAngle);
+                    double angleTurningToOtherSide = 2*PI - angleTurningToOneSide;
+//                    if(angleTurningToOneSide > PI)
+//                        angleTurningToOneSide -= 2*PI;
+//                    if (angleTurningToOtherSide > PI)
+//                        angleTurningToOtherSide -= 2*PI;
+                    System.out.printf("    AngleTurningOneSide = %.2f\n",  angleTurningToOneSide);
+                    System.out.printf("    AngleTurningOtherSide = %.2f\n", angleTurningToOtherSide);
+//                    if(angleTurningToOneSide < 0)
+//                        angleTurningToOneSide += 2*PI;
+//                    if (angleTurningToOtherSide < 0)
+//                        angleTurningToOtherSide += 2*PI;
+                    double smallestAngleToTurn = min(angleTurningToOneSide,
+                                                    angleTurningToOtherSide);
                     double angleToTurn;
-                    if (goalAngleRelativeToRobot >= 0 &&
-                        goalAngleRelativeToRobot <= PI)
-                        angleToTurn = goalAngleRelativeToRobot - PI/2;
-                    else //[-pi..0]
-                        angleToTurn = PI/2 + goalAngleRelativeToRobot % (PI/2);
-                            
+                    if (smallestAngleToTurn == angleTurningToOneSide)
+                        angleToTurn = goalArc - currentAngle;
+                    else
+                        angleToTurn = -angleTurningToOtherSide;
+                    if(angleToTurn > PI)
+                        angleToTurn -= 2*PI;
                     System.out.printf("  angleToTurn: %.2f\n", angleToTurn);
                     
                     double distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
                     System.out.printf("  Distancia: %.2f\n",  distanceToGoal);
-                    moveToGoal.getInputVariable("AnguloComObjetivo").setValue(angleToTurn);
-                    moveToGoal.getInputVariable("DistanciaObjetivo").setValue(distanceToGoal);
+                    moveTowardsGoal.getInputVariable("AnguloComObjetivo").setValue(angleToTurn);
+                    moveTowardsGoal.getInputVariable("DistanciaAteObjetivo").setValue(distanceToGoal);
                     
-                    moveToGoal.process();
+                    moveTowardsGoal.process();
                     
-                    velocidadeEsq = moveToGoal.getOutputVariable("MotorEsq").getValue();
-                    velocidadeDir = moveToGoal.getOutputVariable("MotorDir").getValue();
+                    velocidadeEsq = moveTowardsGoal.getOutputVariable("MotorEsq").getValue();
+                    velocidadeDir = moveTowardsGoal.getOutputVariable("MotorDir").getValue();
                 } else {
                     //desvia das paredes
                     System.out.println("Velocidades para desviar das paredes!");
@@ -281,7 +291,7 @@ public class RemoteApi {
                 vrep.simxSetJointTargetVelocity(clientID,rightMotorHandle.getValue(), (float) velocidadeDir, vrep.simx_opmode_oneshot);
             }
             
-            System.out.println("(Conexão fechada) Encerrando...");
+            System.out.println("(Conexão fechada)");
             endConnection(vrep, clientID);
         }
         else {
@@ -291,15 +301,18 @@ public class RemoteApi {
     }
     
     public static void endConnection(remoteApi vrep, int clientID) {
+        System.out.println("Encerando...");
+        //Pausando a simulação pro robô não ficar vagando
+        vrep.simxPauseSimulation(clientID, vrep.simx_opmode_oneshot);
+
         // Before closing the connection to V-REP, make sure that the last command sent out had time to arrive. You can guarantee this with (for example):
         IntW pingTime = new IntW(0);
         vrep.simxGetPingTime(clientID,pingTime);
 
-        //Pausando a simulação pro robô não ficar vagando
-        vrep.simxPauseSimulation(clientID, vrep.simx_opmode_oneshot);
-
         // Now close the connection to V-REP:   
         vrep.simxFinish(clientID);
+        
+        System.exit(1);
     }
     
     public static float euclideanDistance(float x1, float y1, float x2, float y2)
@@ -307,13 +320,13 @@ public class RemoteApi {
         return (float) sqrt(pow(x2-x1, 2) + pow(y2-y1, 2));
     }
 
-    public static Engine fuzzyControllerToMoveToGoal(){
+    public static Engine fuzzyControllerMoveTowardsGoal(){
         Engine engine = new Engine();
-        engine.setName("moveToGoal");
+        engine.setName("moveTowardsGoal");
 
         InputVariable inputVariable1 = new InputVariable();
         inputVariable1.setEnabled(true);
-        inputVariable1.setName("DistanciaObjetivo");
+        inputVariable1.setName("DistanciaAteObjetivo");
         inputVariable1.setRange(0.000, 10.000);
         inputVariable1.addTerm(new Trapezoid("MuitoPerto", 0.000, 0.000, 0.200, 0.500));
         inputVariable1.addTerm(new Trapezoid("Perto", 0.200, 0.500, 1.000, 1.300));
@@ -323,46 +336,44 @@ public class RemoteApi {
         InputVariable inputVariable2 = new InputVariable();
         inputVariable2.setEnabled(true);
         inputVariable2.setName("AnguloComObjetivo");
-        inputVariable2.setRange(-PI, PI);
-        inputVariable2.addTerm(new Trapezoid("MuitoDireita", -PI, -PI, -1.400, -1.000));
-        inputVariable2.addTerm(new Trapezoid("Direita", -1.400, -1.000, -0.300, 0.100));
-        inputVariable2.addTerm(new Trapezoid("Centro", -0.300, 0.100, 0.100, 0.300));
-        inputVariable2.addTerm(new Trapezoid("Esquerda", 0.100, 0.300, 1.000, 1.400));
-        inputVariable2.addTerm(new Trapezoid("MuitoEsquerda", 1.000, 1.400, PI, PI));
+        inputVariable2.setRange(-3.150, 3.150);
+        inputVariable2.addTerm(new Trapezoid("MuitoDireita", -3.150, -3.150, -1.200, -1.000));
+        inputVariable2.addTerm(new Trapezoid("Direita", -1.200, -1.000, -0.300, 0.000));
+        inputVariable2.addTerm(new Trapezoid("Centro", -0.300, -0.100, 0.100, 0.300));
+        inputVariable2.addTerm(new Trapezoid("Esquerda", 0.000, 0.300, 1.000, 1.200));
+        inputVariable2.addTerm(new Trapezoid("MuitoEsquerda", 1.000, 1.200, 3.150, 3.150));
         engine.addInputVariable(inputVariable2);
 
         OutputVariable outputVariable1 = new OutputVariable();
         outputVariable1.setEnabled(true);
         outputVariable1.setName("MotorEsq");
-        outputVariable1.setRange(-10.000, 10.000);
+        outputVariable1.setRange(0.000, 10.000);
         outputVariable1.fuzzyOutput().setAggregation(new AlgebraicSum());
             //outputVariable1.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable1.setDefuzzifier(new Centroid(200));
-        outputVariable1.setDefaultValue(10.000);
+        outputVariable1.setDefaultValue(0.200);
         outputVariable1.setLockValueInRange(true);
             //outputVariable1.setLockValidOutput(false);
             //outputVariable1.setLockOutputRange(true);
-        outputVariable1.addTerm(new Trapezoid("ReversoRapido", -10.000, -10.000, -6.000, -4.000));
-        outputVariable1.addTerm(new Trapezoid("ReversoLento", -6.000, -4.000, 0.000, 0.000));
-        outputVariable1.addTerm(new Trapezoid("Lento", 0.000, 0.000, 4.000, 6.000));
-        outputVariable1.addTerm(new Trapezoid("Rapido", 4.000, 6.000, 10.000, 10.000));
+        outputVariable1.addTerm(new Trapezoid("Lento", 0.000, 0.000, 3.000, 3.500));
+        outputVariable1.addTerm(new Trapezoid("Medio", 3.000, 3.500, 6.000, 6.500));
+        outputVariable1.addTerm(new Trapezoid("Rapido", 6.000, 6.500, 10.000, 10.000));
         engine.addOutputVariable(outputVariable1);
 
         OutputVariable outputVariable2 = new OutputVariable();
         outputVariable2.setEnabled(true);
         outputVariable2.setName("MotorDir");
-        outputVariable2.setRange(-10.000, 10.000);
+        outputVariable2.setRange(0.000, 10.000);
         outputVariable2.fuzzyOutput().setAggregation(new AlgebraicSum());
             //outputVariable2.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable2.setDefuzzifier(new Centroid(200));
-        outputVariable2.setDefaultValue(10.000);
+        outputVariable2.setDefaultValue(0.200);
         outputVariable2.setLockValueInRange(true);
             //outputVariable2.setLockValidOutput(false);
             //outputVariable2.setLockOutputRange(true);
-        outputVariable2.addTerm(new Trapezoid("ReversoRapido", -10.000, -10.000, -6.000, -4.000));
-        outputVariable2.addTerm(new Trapezoid("ReversoLento", -6.000, -4.000, 0.000, 0.000));
-        outputVariable2.addTerm(new Trapezoid("Lento", 0.000, 0.000, 4.000, 6.000));
-        outputVariable2.addTerm(new Trapezoid("Rapido", 4.000, 6.000, 10.000, 10.000));
+        outputVariable2.addTerm(new Trapezoid("Lento", 0.000, 0.000, 3.000, 3.500));
+        outputVariable2.addTerm(new Trapezoid("Medio", 3.000, 3.500, 6.000, 6.500));
+        outputVariable2.addTerm(new Trapezoid("Rapido", 6.000, 6.500, 10.000, 10.000));
         engine.addOutputVariable(outputVariable2);
 
         RuleBlock ruleBlock = new RuleBlock();
@@ -371,15 +382,15 @@ public class RemoteApi {
         ruleBlock.setConjunction(new Minimum());
         ruleBlock.setDisjunction(new Maximum());
         ruleBlock.setImplication(new Minimum());
-//        ruleBlock.setActivation(new Highest());
-//        ruleBlock.setActivation(new Minimum());
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoEsquerda then MotorEsq is ReversoRapido and MotorDir is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Esquerda then MotorEsq is ReversoLento and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Direita then MotorEsq is Lento and MotorDir is ReversoLento", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoDireita then MotorEsq is Rapido and MotorDir is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if DistanciaObjetivo is MuitoPerto and AnguloComObjetivo is Centro then MotorEsq is Lento and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if DistanciaObjetivo is Perto and AnguloComObjetivo is Centro then MotorEsq is Lento and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if DistanciaObjetivo is Longe and AnguloComObjetivo is Centro then MotorEsq is Rapido and MotorDir is Rapido", engine));
+            //ruleBlock.setActivation(new Minimum());
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoDireita then MotorEsq is Rapido and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Direita then MotorEsq is Rapido and MotorDir is Medio", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Centro then MotorEsq is Medio and MotorDir is Medio", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Esquerda then MotorEsq is Medio and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoEsquerda then MotorEsq is Lento and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is MuitoPerto then MotorEsq is Lento and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Perto then MotorEsq is Medio and MotorDir is Medio", engine));
+        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Longe then MotorEsq is Rapido and MotorDir is Rapido", engine));
         engine.addRuleBlock(ruleBlock);
 
         return engine;
@@ -424,7 +435,7 @@ public class RemoteApi {
             //outputVariable1.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable1.setDefuzzifier(new Centroid(200));
         outputVariable1.setDefaultValue(0.000);
-        outputVariable1.setLockValueInRange(false);
+        outputVariable1.setLockValueInRange(true);
             //outputVariable1.setLockValidOutput(false);
             //outputVariable1.setLockOutputRange(true);
         outputVariable1.addTerm(new Trapezoid("ReversoRapido", -10.000, -10.000, -6.000, -4.000));
@@ -441,7 +452,7 @@ public class RemoteApi {
             //outputVariable2.fuzzyOutput().setAccumulation(new AlgebraicSum());
         outputVariable2.setDefuzzifier(new Centroid(200));
         outputVariable2.setDefaultValue(0.000);
-        outputVariable2.setLockValueInRange(false);
+        outputVariable2.setLockValueInRange(true);
             //outputVariable2.setLockValidOutput(false);
             //outputVariable2.setLockOutputRange(true);
         outputVariable2.addTerm(new Trapezoid("ReversoRapido", -10.000, -10.000, -6.000, -4.000));
