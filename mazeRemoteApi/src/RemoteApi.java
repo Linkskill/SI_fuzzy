@@ -117,7 +117,7 @@ public class RemoteApi {
             System.out.println("Se conectando aos motores...");
             
             // Para K3
-//            if(vrep.simxGetObjectHandle(clientID, robotName + "_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, "K3_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
 //                System.out.println("  Motor esquerdo ok!");
             // Para Bob
             if(vrep.simxGetObjectHandle(clientID, robotName + "_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
@@ -129,7 +129,7 @@ public class RemoteApi {
             }
 
             // Para K3
-//            if(vrep.simxGetObjectHandle(clientID, robotName + "_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, "K3_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
 //                System.out.println("  Motor direito ok!");
             // Para Bob
             if(vrep.simxGetObjectHandle(clientID, robotName + "_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
@@ -440,15 +440,15 @@ public class RemoteApi {
         ruleBlock.setDisjunction(new Maximum());
         ruleBlock.setImplication(new Minimum());
             //ruleBlock.setActivation(new Minimum());
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado and SensorDir is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Rapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorDir is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorDir is Medio or SensorDir is Perto then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio and SensorEsq is Medio or SensorEsq is Perto then MotorEsq is ReversoLento and MotorDir is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorDir is Perto or SensorDir is Medio then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorEsq is Perto or SensorEsq is Medio then MotorEsq is ReversoLento and MotorDir is ReversoRapido", engine));
         ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Perto and SensorEsq is Perto then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorEsq is Medio then MotorEsq is Rapido and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is Medio then MotorDir is Rapido and MotorEsq is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorEsq is Perto then MotorEsq is Lento and MotorDir is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is Perto then MotorDir is Lento and MotorEsq is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorEsq is Medio and SensorFrente is LongeOuNaoDetectado then MotorEsq is Rapido and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Medio and SensorFrente is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorEsq is Perto and SensorFrente is LongeOuNaoDetectado then MotorEsq is Lento and MotorDir is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorDir is Perto and SensorFrente is LongeOuNaoDetectado then MotorDir is Lento and MotorEsq is ReversoRapido", engine));
         engine.addRuleBlock(ruleBlock);
         
         return engine;
