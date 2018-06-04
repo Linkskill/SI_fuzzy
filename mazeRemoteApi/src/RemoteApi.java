@@ -64,26 +64,36 @@ public class RemoteApi {
             System.out.println("Sucesso!");
             System.out.println("Conectado ao V-REP!\n");
             
-            // inicialização do robo
-            // Para K3
-//            String robotName = "K3_robot";
+            /* ===================================================
+                Inicialização do robo
+            =================================================== */
             // Para Bob
-            String robotName = "bubbleRob";
+//            String robotName = "bubbleRob";
+//            String sceneName = "CenaVREPBob.ttt";
+            // Para K3
+            String robotName = "K3_robot";
+            String sceneName = "sceneKhepheraK3Alternativa.ttt";
+
             System.out.print("Procurando objeto " + robotName + "...");
             IntW robotHandle = new IntW(0);
             if(vrep.simxGetObjectHandle(clientID, robotName, robotHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
-                System.out.println("Conectado! <<<<< " +
-                    " depois temos que trocar pro nosso robô!");
+                System.out.println("Conectado!");
             else {
                 System.out.println("Falhou!");
                 System.out.println(robotName + "não encontrado!");
+                System.out.println("Verifique se a cena " + sceneName
+                        + " está aberta e rodando no VREP.");
                 endConnection(vrep, clientID);
                 System.exit(1);
             }
 
-            // inicialização dos sensores
-//            final int NUM_SENSORS = 6; //K3
-            final int NUM_SENSORS = 5; //Bob
+            /* ===================================================
+                Inicialização dos sensores
+            =================================================== */
+            // Para Bob
+//            final int NUM_SENSORS = 5;
+            // Para K3
+            final int NUM_SENSORS = 6;
             
             System.out.print("Conectando-se aos sensores...");
             IntW[] sensors = new IntW[NUM_SENSORS];
@@ -91,39 +101,41 @@ public class RemoteApi {
                 sensors[i] = new IntW(0);
             
             // Para Bob
-            if (vrep.simxGetObjectHandle(clientID, "Left_ultrasonic", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "LM_ultrasonic", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "Middle_ultrasonic", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "RM_ultrasonic", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok)
-                System.out.println("Sucesso! (ultrassom)");
+//            if (vrep.simxGetObjectHandle(clientID, "Left_ultrasonic", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "LM_ultrasonic", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "Middle_ultrasonic", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "RM_ultrasonic", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//                System.out.println("Sucesso! (ultrassom)");
             // Para K3
-//            if (vrep.simxGetObjectHandle(clientID, "K3_infraredSensorL", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorLM", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorML", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorMR", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorRM", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorR", sensors[5], vrep.simx_opmode_blocking) == vrep.simx_return_ok)
-//                System.out.println("Sucesso! (infrared)");
+            if (vrep.simxGetObjectHandle(clientID, "K3_infraredSensorL", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorLM", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorML", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorMR", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorRM", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorR", sensors[5], vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+                System.out.println("Sucesso! (infrared)");
             else {
                 System.out.println("Falhou!\n. Saindo...");
                 endConnection(vrep, clientID);
             }
+
             FloatWA detectedPoint = new FloatWA(3);
             BoolW detected = new BoolW(false);
-
             float[] distances = new float[NUM_SENSORS];
             
-            // inicialização dos motores
+            /* ===================================================
+                Inicialização dos motores
+            =================================================== */
             IntW leftMotorHandle = new IntW(0),
                  rightMotorHandle = new IntW(0);
             System.out.println("Se conectando aos motores...");
             
-            // Para K3
-//            if(vrep.simxGetObjectHandle(clientID, "K3_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
-//                System.out.println("  Motor esquerdo ok!");
             // Para Bob
-            if(vrep.simxGetObjectHandle(clientID, robotName + "_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, robotName + "_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//                System.out.println("  Motor esquerdo ok!");
+            // Para K3
+            if(vrep.simxGetObjectHandle(clientID, "K3_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
                 System.out.println("  Motor esquerdo ok!");
             else {
                 System.out.println("  Motor esquerdo não encontrado!");
@@ -131,11 +143,11 @@ public class RemoteApi {
                 System.exit(1);
             }
 
-            // Para K3
-//            if(vrep.simxGetObjectHandle(clientID, "K3_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
-//                System.out.println("  Motor direito ok!");
             // Para Bob
-            if(vrep.simxGetObjectHandle(clientID, robotName + "_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, robotName + "_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//                System.out.println("  Motor direito ok!");
+            // Para K3
+            if(vrep.simxGetObjectHandle(clientID, "K3_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
                 System.out.println("  Motor direito ok!");
             else {
                 System.out.println("  Motor direito não encontrado!");
@@ -145,7 +157,10 @@ public class RemoteApi {
             
             double velocidadeEsq, velocidadeDir;
 
-            //Lê posição e ângulo pra testar
+            /* ===================================================
+                Posição e angulo iniciais
+            =================================================== */
+            
             FloatWA position = new FloatWA(3), //x, y, z. Nao usa-se o z
                     angle = new FloatWA(3); //alpha, beta e gamma. Usa-se o gamma
             float currentX, currentY,
@@ -160,20 +175,26 @@ public class RemoteApi {
                      ": (" + currentX + ", " + currentY + ")");
             System.out.println("Orientacao: " + currentAngle + " rad");
             
-            //engines fuzzy criadas no fuzzylite
+            /* ===================================================
+                Engines fuzzy criadas no fuzzylite
+            =================================================== */
             Engine moveTowardsGoal = fuzzyControllerMoveTowardsGoal();
             Engine wallDetection = fuzzyControllerDodgeWall();
 
-            //outras variáveis
+            /* ===================================================
+                Outra variaveis
+            =================================================== */
             float distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
             long timeLimit = 180*NANOS_PER_S; //3 minutos
             long startTime = System.nanoTime();
 
-            //loop de execucao
+            /* ===================================================
+                Loop de Execução
+            =================================================== */
             while (vrep.simxGetConnectionId(clientID) != -1 &&
                     distanceToGoal > 0.1 &&
                     System.nanoTime() - startTime < timeLimit) {
-                //Lê posição e ângulo
+                // Lê posição e ângulo
                 vrep.simxGetObjectPosition(clientID, robotHandle.getValue(), -1, position, vrep.simx_opmode_blocking);
                 vrep.simxGetObjectOrientation(clientID, robotHandle.getValue(), -1, angle, vrep.simx_opmode_blocking);
                 currentX = position.getArray()[0];
@@ -183,7 +204,7 @@ public class RemoteApi {
 
                 distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
 
-                //Lê os sensores, calcula as distâncias
+                // Lê os sensores, calcula as distâncias
                 boolean noWallsDetected = true;
                 for(int i=0; i < NUM_SENSORS; i++) {
                     vrep.simxReadProximitySensor(clientID, sensors[i].getValue(), detected, detectedPoint, null, null, vrep.simx_opmode_blocking);
@@ -196,20 +217,19 @@ public class RemoteApi {
                              pow(sensorReadValues[2], 2));
                         distances[i] = (float) sqrt(distances[i]);
                     } else
-                        distances[i] = (float)0.5;
-                        //variáveis fuzzy dos sensores tem que ir até esse valor
+                        distances[i] = (float) 0.5;
                 }
                 
-                //combina as distâncias em 3
+                // Combina as distâncias em 3
                 //o que faz mais sentido quando vai combinar? média? máximo?
-                float distanciaEsquerda = (distances[0] + distances[1]) / 2;
-                // Para K3
-//                float distanciaFrente = (distances[2] + distances[3]) / 2;
-//                float distanciaDireita = (distances[4] + distances[5]) / 2;
                 // Para Bob
-                float distanciaFrente = distances[2];
-                float distanciaDireita = (distances[3] + distances[4]) / 2;
-                
+//                float distanciaEsquerda = (distances[0] + distances[1]) / 2;
+//                float distanciaFrente = distances[2];
+//                float distanciaDireita = (distances[3] + distances[4]) / 2;                
+                // Para K3
+                float distanciaEsquerda = (distances[0] + distances[1]) / 2;
+                float distanciaFrente = (distances[2] + distances[3]) / 2;
+                float distanciaDireita = (distances[4] + distances[5]) / 2;
                 
                 if (noWallsDetected) {
                     //vira na direção do objetivo
@@ -378,6 +398,7 @@ public class RemoteApi {
                 + " then MotorEsq is Medio and MotorDir is Medio", engine));
         ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Longe"
                 + " then MotorEsq is Rapido and MotorDir is Rapido", engine));
+        
         engine.addRuleBlock(ruleBlock);
 
         return engine;
