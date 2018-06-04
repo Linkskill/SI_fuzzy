@@ -66,7 +66,7 @@ public class RemoteApi {
             
             // inicialização do robo
             // Para K3
-            //String robotName = "K3_robot";
+//            String robotName = "K3_robot";
             // Para Bob
             String robotName = "bubbleRob";
             System.out.print("Procurando objeto " + robotName + "...");
@@ -82,7 +82,7 @@ public class RemoteApi {
             }
 
             // inicialização dos sensores
-            //final int NUM_SENSORS = 6; //K3
+//            final int NUM_SENSORS = 6; //K3
             final int NUM_SENSORS = 5; //Bob
             
             System.out.print("Conectando-se aos sensores...");
@@ -90,18 +90,21 @@ public class RemoteApi {
             for (int i=0; i < NUM_SENSORS; i++) 
                 sensors[i] = new IntW(0);
             
+            // Para Bob
             if (vrep.simxGetObjectHandle(clientID, "Left_ultrasonic", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
                 vrep.simxGetObjectHandle(clientID, "LM_ultrasonic", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
                 vrep.simxGetObjectHandle(clientID, "Middle_ultrasonic", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                // Para K3
-//                vrep.simxGetObjectHandle(clientID, "Middle_ultrasonic0", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "RM_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-//                vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[5], vrep.simx_opmode_blocking) == vrep.simx_return_ok
-                // Para Bob
                 vrep.simxGetObjectHandle(clientID, "RM_ultrasonic", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
-                vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok
-                )
+                vrep.simxGetObjectHandle(clientID, "Right_ultrasonic", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok)
                 System.out.println("Sucesso! (ultrassom)");
+            // Para K3
+//            if (vrep.simxGetObjectHandle(clientID, "K3_infraredSensorL", sensors[0], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorLM", sensors[1], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorML", sensors[2], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorMR", sensors[3], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorRM", sensors[4], vrep.simx_opmode_blocking) == vrep.simx_return_ok &&
+//                vrep.simxGetObjectHandle(clientID, "K3_infraredSensorR", sensors[5], vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//                System.out.println("Sucesso! (infrared)");
             else {
                 System.out.println("Falhou!\n. Saindo...");
                 endConnection(vrep, clientID);
@@ -266,7 +269,7 @@ public class RemoteApi {
             
             System.out.println("(Conexão fechada)");
             endConnection(vrep, clientID);
-            System.exit(1);
+            System.exit(0);
         }
         else {
             System.out.println("Falhou!");
@@ -355,14 +358,26 @@ public class RemoteApi {
         ruleBlock.setDisjunction(new Maximum());
         ruleBlock.setImplication(new Minimum());
             //ruleBlock.setActivation(new Minimum());
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoDireita then MotorEsq is Rapido and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Direita then MotorEsq is Rapido and MotorDir is Medio", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Centro then MotorEsq is Medio and MotorDir is Medio", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Esquerda then MotorEsq is Medio and MotorDir is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoEsquerda then MotorEsq is Lento and MotorDir is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is MuitoPerto then MotorEsq is Lento and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Perto then MotorEsq is Medio and MotorDir is Medio", engine));
-        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Longe then MotorEsq is Rapido and MotorDir is Rapido", engine));
+            
+        //Seta as velocidades de acordo com o angulo
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoDireita"
+                + " then MotorEsq is Rapido and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Direita"
+                + " then MotorEsq is Rapido and MotorDir is Medio", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Centro"
+                + " then MotorEsq is Medio and MotorDir is Medio", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is Esquerda"
+                + " then MotorEsq is Medio and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if AnguloComObjetivo is MuitoEsquerda"
+                + " then MotorEsq is Lento and MotorDir is Rapido", engine));
+        
+        //Se está se aproximando do objetivo, diminui a velocidade
+        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is MuitoPerto"
+                + " then MotorEsq is Lento and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Perto"
+                + " then MotorEsq is Medio and MotorDir is Medio", engine));
+        ruleBlock.addRule(Rule.parse("if DistanciaAteObjetivo is Longe"
+                + " then MotorEsq is Rapido and MotorDir is Rapido", engine));
         engine.addRuleBlock(ruleBlock);
 
         return engine;
@@ -377,8 +392,8 @@ public class RemoteApi {
         inputVariable1.setName("SensorFrente");
         inputVariable1.setRange(0.000, 0.500);
         inputVariable1.addTerm(new Trapezoid("Perto", 0.000, 0.000, 0.050, 0.080));
-        inputVariable1.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.170, 0.200));
-        inputVariable1.addTerm(new Trapezoid("LongeOuNaoDetectado", 0.170, 0.201, 0.500, 0.500));
+        inputVariable1.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.190, 0.200));
+        inputVariable1.addTerm(new Trapezoid("LongeOuNaoDetectado", 0.190, 0.201, 0.500, 0.500));
         engine.addInputVariable(inputVariable1);
 
         InputVariable inputVariable2 = new InputVariable();
@@ -386,8 +401,8 @@ public class RemoteApi {
         inputVariable2.setName("SensorEsq");
         inputVariable2.setRange(0.000, 0.500);
         inputVariable2.addTerm(new Trapezoid("Perto", 0.000, 0.000, 0.050, 0.080));
-        inputVariable2.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.170, 0.200));
-        inputVariable2.addTerm(new Trapezoid("LongeOuNaoDetectado", 0.170, 0.201, 0.500, 0.500));
+        inputVariable2.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.190, 0.200));
+        inputVariable2.addTerm(new Trapezoid("LongeOuNaoDetectado", 0.190, 0.201, 0.500, 0.500));
         engine.addInputVariable(inputVariable2);
 
         InputVariable inputVariable3 = new InputVariable();
@@ -395,8 +410,8 @@ public class RemoteApi {
         inputVariable3.setName("SensorDir");
         inputVariable3.setRange(0.000, 0.500);
         inputVariable3.addTerm(new Trapezoid("Perto", 0.000, 0.000, 0.050, 0.080));
-        inputVariable3.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.170, 0.200));
-        inputVariable3.addTerm(new Trapezoid("LongeOuNaoDetectado", 0.170, 0.201, 0.500, 0.500));
+        inputVariable3.addTerm(new Trapezoid("Medio", 0.050, 0.080, 0.190, 0.200));
+        inputVariable3.addTerm(new Trapezoid("LongeOuNaoDetectado", 0.190, 0.201, 0.500, 0.500));
         engine.addInputVariable(inputVariable3);
 
         OutputVariable outputVariable1 = new OutputVariable();
@@ -440,15 +455,74 @@ public class RemoteApi {
         ruleBlock.setDisjunction(new Maximum());
         ruleBlock.setImplication(new Minimum());
             //ruleBlock.setActivation(new Minimum());
-        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado and SensorDir is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Rapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorDir is LongeOuNaoDetectado and SensorEsq is LongeOuNaoDetectado then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorDir is Perto or SensorDir is Medio then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto or SensorFrente is Medio and SensorEsq is Perto or SensorEsq is Medio then MotorEsq is ReversoLento and MotorDir is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto and SensorDir is Perto and SensorEsq is Perto then MotorDir is ReversoLento and MotorEsq is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorEsq is Medio and SensorFrente is LongeOuNaoDetectado then MotorEsq is Rapido and MotorDir is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is Medio and SensorFrente is LongeOuNaoDetectado then MotorDir is Rapido and MotorEsq is Lento", engine));
-        ruleBlock.addRule(Rule.parse("if SensorEsq is Perto and SensorFrente is LongeOuNaoDetectado then MotorEsq is Lento and MotorDir is ReversoRapido", engine));
-        ruleBlock.addRule(Rule.parse("if SensorDir is Perto and SensorFrente is LongeOuNaoDetectado then MotorDir is Lento and MotorEsq is ReversoRapido", engine));
+        
+        //Se não detectou nada, nem era pra cair nesse
+        //controlador, mas se cair, só segue reto
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado"
+                + " and SensorEsq is LongeOuNaoDetectado"
+                + " and SensorDir is LongeOuNaoDetectado"
+                + " then MotorDir is Rapido and MotorEsq is Rapido", engine));
+        //Se tem parede de tudo quanto é lado, rotaciona pra esquerda
+        ruleBlock.addRule(Rule.parse("if (SensorFrente is Perto or SensorFrente is Medio)"
+                + " and (SensorEsq is Perto or SensorEsq is Medio)"
+                + " and (SensorDir is Perto or SensorDir is Medio)"
+                + " then MotorEsq is ReversoRapido and MotorDir is Rapido", engine));
+
+        /* Nos casos abaixo "virar" significa:
+        - Rotacionar no lugar se as paredes estão muito perto
+        - Dar uma leve ré em direção à parede lateral, com a intenção
+          de se afastar se as paredes estão à uma distância média. */
+        //Se paredes na frente e esquerda, vira pra direita
+        ruleBlock.addRule(Rule.parse("if (SensorFrente is Perto or SensorFrente is Medio)"
+                + " and SensorEsq is Perto"
+                + " and SensorDir is LongeOuNaoDetectado"
+                + " then MotorEsq is Rapido and MotorDir is ReversoRapido", engine));
+        ruleBlock.addRule(Rule.parse("if (SensorFrente is Perto or SensorFrente is Medio)"
+                + " and SensorEsq is Medio"
+                + " and SensorDir is LongeOuNaoDetectado"
+                + " then MotorEsq is ReversoLento and MotorDir is ReversoRapido", engine));
+        //Se paredes na frente e direita, vira pra esquerda
+        ruleBlock.addRule(Rule.parse("if (SensorFrente is Perto or SensorFrente is Medio)"
+                + " and SensorEsq is LongeOuNaoDetectado"
+                + " and SensorDir is Perto"
+                + " then MotorEsq is ReversoRapido and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if (SensorFrente is Perto or SensorFrente is Medio)"
+                + " and SensorEsq is LongeOuNaoDetectado"
+                + " and SensorDir is Medio"
+                + " then MotorEsq is ReversoRapido and MotorDir is ReversoLento", engine));
+        //Se parede na frente e dá pra virar pros dois lados, vira pra esquerda
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Perto"
+                + " and SensorEsq is LongeOuNaoDetectado"
+                + " and SensorDir is LongeOuNaoDetectado"
+                + " then MotorEsq is ReversoRapido and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is Medio"
+                + " and SensorEsq is LongeOuNaoDetectado"
+                + " and SensorDir is LongeOuNaoDetectado"
+                + " then MotorEsq is ReversoRapido and MotorDir is ReversoLento", engine));
+        
+        //Se paredes só na esquerda, se afasta para a direita
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado"
+                + " and SensorDir is LongeOuNaoDetectado"
+                + " and (SensorEsq is Perto or SensorEsq is Medio)"
+                + " then MotorEsq is Rapido and MotorDir is Lento", engine));
+        //Se paredes só na direita, se afasta para a esquerda
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado"
+                + " and SensorEsq is LongeOuNaoDetectado"
+                + " and (SensorDir is Perto or SensorDir is Medio)"
+                + " then MotorEsq is Lento and MotorDir is Rapido", engine));
+        
+        //Se paredes nos dois lados (corredor), tenta seguir reto
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado"
+                + " and ((SensorEsq is Perto and SensorDir is Perto)"
+                + "  or (SensorEsq is Medio and SensorDir is Medio))"
+                + " then MotorEsq is Rapido and MotorDir is Rapido", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado"
+                + " and SensorEsq is Perto and SensorDir is Medio"
+                + " then MotorEsq is Rapido and MotorDir is Lento", engine));
+        ruleBlock.addRule(Rule.parse("if SensorFrente is LongeOuNaoDetectado"
+                + " and SensorEsq is Medio and SensorDir is Perto"
+                + " then MotorEsq is Lento and MotorDir is Rapido", engine));
+        
         engine.addRuleBlock(ruleBlock);
         
         return engine;
