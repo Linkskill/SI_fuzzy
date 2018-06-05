@@ -4,8 +4,6 @@
  * and open the template in the editor.
  */
 
-
-//Deixa tudo, quando tiver pronto a gente tira o que não utilizar
 import com.fuzzylite.*;
 import com.fuzzylite.activation.*;
 import com.fuzzylite.defuzzifier.*;
@@ -18,7 +16,6 @@ import com.fuzzylite.norm.t.*;
 import com.fuzzylite.rule.*;
 import com.fuzzylite.term.*;
 import com.fuzzylite.variable.*;
-
 import coppelia.BoolW;
 import coppelia.FloatW;
 import coppelia.FloatWA;
@@ -28,7 +25,7 @@ import coppelia.IntWA;
 import coppelia.remoteApi;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
-import static java.lang.Math.atan;
+import static java.lang.Math.atan2;
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
@@ -72,7 +69,7 @@ public class RemoteApi {
 //            String sceneName = "CenaVREPBob.ttt";
             // Para K3
             String robotName = "K3_robot";
-            String sceneName = "sceneKhepheraK3Alternativa.ttt";
+            String sceneName = "CenaKhepheraK3.ttt";
 
             System.out.print("Procurando objeto " + robotName + "...");
             IntW robotHandle = new IntW(0);
@@ -132,7 +129,7 @@ public class RemoteApi {
             System.out.println("Se conectando aos motores...");
             
             // Para Bob
-//            if(vrep.simxGetObjectHandle(clientID, robotName + "_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, "bubbleRob_leftMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
 //                System.out.println("  Motor esquerdo ok!");
             // Para K3
             if(vrep.simxGetObjectHandle(clientID, "K3_leftWheelMotor", leftMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
@@ -144,7 +141,7 @@ public class RemoteApi {
             }
 
             // Para Bob
-//            if(vrep.simxGetObjectHandle(clientID, robotName + "_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
+//            if(vrep.simxGetObjectHandle(clientID, "bubbleRob_rightMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
 //                System.out.println("  Motor direito ok!");
             // Para K3
             if(vrep.simxGetObjectHandle(clientID, "K3_rightWheelMotor", rightMotorHandle, vrep.simx_opmode_blocking) == vrep.simx_return_ok)
@@ -185,7 +182,7 @@ public class RemoteApi {
                 Outra variaveis
             =================================================== */
             float distanceToGoal = euclideanDistance(currentX, currentY, goalX, goalY);
-            long timeLimit = 180*NANOS_PER_S; //3 minutos
+            long timeLimit = 5*60*NANOS_PER_S;
             long startTime = System.nanoTime();
 
             /* ===================================================
@@ -236,13 +233,11 @@ public class RemoteApi {
                     System.out.println("Indo pro objetivo!");
                     
                     System.out.printf("  Angulo atual: %.2f\n", currentAngle);
-                    double goalArc = Math.atan2(goalY-currentY, goalX-currentX);
+                    double goalArc = atan2(goalY-currentY, goalX-currentX);
                     System.out.printf("  Goal angle: %.2f\n", goalArc);
-                    //pra fazer as contas, converte pra [0..2pi]
 
                     double angleTurningToOneSide = abs(goalArc - currentAngle);
                     double angleTurningToOtherSide = 2*PI - angleTurningToOneSide;
-
                     System.out.printf("  AngleTurningOneSide = %.2f\n",  angleTurningToOneSide);
                     System.out.printf("  AngleTurningOtherSide = %.2f\n", angleTurningToOtherSide);
 
@@ -255,7 +250,7 @@ public class RemoteApi {
                         angleToTurn = -angleTurningToOtherSide;
                     if(angleToTurn > PI)
                         angleToTurn -= 2*PI;
-                    System.out.printf("  Aangle to turn: %.2f\n", angleToTurn);
+                    System.out.printf("  Angle to turn: %.2f\n", angleToTurn);
                     System.out.printf("  Distancia: %.2f\n",  distanceToGoal);
                     
                     moveTowardsGoal.getInputVariable("AnguloComObjetivo").setValue(angleToTurn);
