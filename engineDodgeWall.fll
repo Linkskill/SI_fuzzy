@@ -1,46 +1,46 @@
 Engine: wallDetection
 InputVariable: SensorFrente
   enabled: true
-  range: 0.000 0.200
-  term: Perto Trapezoid 0.000 0.000 0.050 0.075
-  term: Medio Trapezoid 0.050 0.080 0.120 0.150
-  term: LongeOuNaoDetectado Trapezoid 0.125 0.150 0.200 0.200
+  range: 0.000 0.500
+  term: Perto Trapezoid 0.000 0.000 0.050 0.080
+  term: Medio Trapezoid 0.050 0.080 0.190 0.200
+  term: LongeOuNaoDetectado Trapezoid 0.190 0.201 0.500 0.500
 InputVariable: SensorEsq
   enabled: true
-  range: 0.000 0.200
-  term: Perto Trapezoid 0.000 0.000 0.050 0.075
-  term: Medio Trapezoid 0.050 0.080 0.120 0.150
-  term: LongeOuNaoDetectado Trapezoid 0.125 0.150 0.200 0.200
+  range: 0.000 0.500
+  term: Perto Trapezoid 0.000 0.000 0.050 0.080
+  term: Medio Trapezoid 0.050 0.080 0.190 0.200
+  term: LongeOuNaoDetectado Trapezoid 0.190 0.201 0.500 0.500
 InputVariable: SensorDir
   enabled: true
-  range: 0.000 0.200
-  term: Perto Trapezoid 0.000 0.000 0.050 0.075
-  term: Medio Trapezoid 0.050 0.080 0.120 0.150
-  term: LongeOuNaoDetectado Trapezoid 0.125 0.150 0.200 0.200
+  range: 0.000 0.500
+  term: Perto Trapezoid 0.000 0.000 0.050 0.080
+  term: Medio Trapezoid 0.050 0.080 0.190 0.200
+  term: LongeOuNaoDetectado Trapezoid 0.190 0.201 0.500 0.500
 OutputVariable: MotorEsq
   enabled: true
-  range: -1.000 1.000
+  range: -10.000 10.000
   accumulation: AlgebraicSum
   defuzzifier: Centroid 200
   default: 0.000
   lock-valid: false
   lock-range: true
-  term: ReversoRapido Trapezoid -1.000 -1.000 -0.600 -0.400
-  term: ReversoLento Trapezoid -0.600 -0.400 0.000 0.000
-  term: Lento Trapezoid 0.000 0.000 0.400 0.600
-  term: Rapido Trapezoid 0.400 0.600 1.000 1.000
+  term: ReversoRapido Trapezoid -10.000 -10.000 -6.000 -4.000
+  term: ReversoLento Trapezoid -6.000 -4.000 0.000 0.000
+  term: Lento Trapezoid 0.000 0.000 4.000 6.000
+  term: Rapido Trapezoid 4.000 6.000 10.000 10.000
 OutputVariable: MotorDir
   enabled: true
-  range: -1.000 1.000
+  range: -10.000 10.000
   accumulation: AlgebraicSum
   defuzzifier: Centroid 200
   default: 0.000
   lock-valid: false
   lock-range: true
-  term: ReversoRapido Trapezoid -1.000 -1.000 -0.600 -0.400
-  term: ReversoLento Trapezoid -0.600 -0.400 0.000 0.000
-  term: Lento Trapezoid 0.000 0.000 0.400 0.600
-  term: Rapido Trapezoid 0.400 0.600 1.000 1.000
+  term: ReversoRapido Trapezoid -10.000 -10.000 -6.000 -4.000
+  term: ReversoLento Trapezoid -6.000 -4.000 0.000 0.000
+  term: Lento Trapezoid 0.000 0.000 4.000 6.000
+  term: Rapido Trapezoid 4.000 6.000 10.000 10.000
 RuleBlock: 
   enabled: true
   conjunction: Minimum
