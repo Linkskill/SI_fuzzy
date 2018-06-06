@@ -25,7 +25,7 @@
 	* Run
 
 #### Só executar
-* Copia os arquivos de mazeRemoteApi/dist/ para um diretório de sua escolha
+* Copie os arquivos de mazeRemoteApi/dist/ para um diretório de sua escolha
 * Coloque o arquivo `remoteApiJava.dll` (Windows) ou `remoteApi.so` (Linux) neste mesmo diretório.
 
     Esse arquivo se encontra dentro da sua instalação do VREP, em /programming/remoteApiBindings/lib
